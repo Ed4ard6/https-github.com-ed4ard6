@@ -1,0 +1,41 @@
+// ============================================================================
+// ESTILOS GLOBALES - Finance App
+// ============================================================================
+
+// Importar tema personalizado de Angular Material
+@import 'styles/theme.scss';
+
+// Estilos globales adicionales
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-primary);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+// Resetear márgenes por defecto
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+// Estilos para el contenedor principal
+app-root {
+  display: block;
+  height: 100%;
+}
