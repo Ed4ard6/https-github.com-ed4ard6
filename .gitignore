@@ -1,0 +1,41 @@
+# C# / .NET
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+.vs/
+.vscode/
+*.csproj.user
+*.sln.user
+*.vsconfig
+appsettings.*.json
+!appsettings.Development.json
+
+# Angular
+node_modules/
+dist/
+.angular/
+.env
+.env.local
+*.log
+
+# IDEs
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+postgres_data/
+
+# Misc
+.DS_Store
+.env.local
+.env.*.local
