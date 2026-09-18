@@ -26,13 +26,18 @@ export class AuthService {
   login(email: string, password: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, { email, password }).pipe(
       tap(response => {
+        console.log('✅ Login exitoso, guardando token:', response.token?.substring(0, 20) + '...');
         this.storeToken(response.token);
         this.storeUser(response.user);
         this.isAuthenticatedSubject.next(true);
         this.userSubject.next(response.user);
+
+        // Verificar que se guardó
+        const storedToken = localStorage.getItem(this.TOKEN_KEY);
+        console.log('📦 Token almacenado:', storedToken ? 'SÍ ✅' : 'NO ❌');
       }),
       catchError(error => {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         throw error;
       })
     );
