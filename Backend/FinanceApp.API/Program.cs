@@ -51,6 +51,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Seeding de datos (solo en desarrollo)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<FinanceDbContext>();
+    FinanceApp.API.Data.DataSeeder.SeedData(db);
+}
+
 // Middleware
 if (app.Environment.IsDevelopment())
 {

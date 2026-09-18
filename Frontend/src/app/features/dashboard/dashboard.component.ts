@@ -6,7 +6,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
+import { TransactionService } from '../../core/services/transaction.service';
 import { MockDataService } from '../../core/services/mock-data.service';
 import { DashboardData, Transaction } from '../../core/models/domain.models';
 
@@ -25,10 +27,17 @@ import { DashboardData, Transaction } from '../../core/models/domain.models';
     MatIconModule,
     MatButtonModule,
     MatProgressBarModule,
+    MatProgressSpinnerModule,
     MatTableModule
   ],
   template: `
     <div class="dashboard-container">
+      <!-- Spinner de carga -->
+      <div *ngIf="isLoading" class="loading-overlay">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Cargando datos...</p>
+      </div>
+
       <!-- Título -->
       <div class="dashboard-header">
         <h1>Dashboard Financiero</h1>
@@ -167,6 +176,27 @@ import { DashboardData, Transaction } from '../../core/models/domain.models';
         max-width: 1400px;
         margin: 0 auto;
         width: 100%;
+        position: relative;
+      }
+
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(11, 18, 32, 0.9);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-lg);
+        z-index: 1000;
+
+        p {
+          color: var(--color-text-secondary);
+          margin: 0;
+        }
       }
 
       .dashboard-header {
@@ -447,9 +477,11 @@ import { DashboardData, Transaction } from '../../core/models/domain.models';
   ]
 })
 export class DashboardComponent implements OnInit {
+  private transactionService = inject(TransactionService);
   private mockDataService = inject(MockDataService);
   private router = inject(Router);
 
+  isLoading = true;
   dashboardData: DashboardData = {
     totalBalance: 0,
     totalIncome: 0,
@@ -462,8 +494,69 @@ export class DashboardComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    // Cargar datos del dashboard
-    this.dashboardData = this.mockDataService.getDashboardData();
+    this.loadDashboardData();
+  }
+
+  loadDashboardData(): void {
+    this.isLoading = true;
+    this.transactionService.getTransactions().subscribe({
+      next: (transactions) => {
+        this.processDashboardData(transactions);
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.warn('Error loading transactions, using mock data:', error);
+        this.dashboardData = this.mockDataService.getDashboardData();
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private processDashboardData(transactions: Transaction[]): void {
+    const now = new Date();
+    const currentMonth = new Intl.DateTimeFormat('es-CO', {
+      month: 'long',
+      year: 'numeric'
+    }).format(now);
+
+    const income = transactions
+      .filter(t => t.kind === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const expense = transactions
+      .filter(t => t.kind === 'expense')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    const categoryMap = new Map<string, { amount: number; category: any }>();
+    transactions
+      .filter(t => t.kind === 'expense' && t.category)
+      .forEach(t => {
+        const key = t.category!.id;
+        if (!categoryMap.has(key)) {
+          categoryMap.set(key, { amount: 0, category: t.category });
+        }
+        categoryMap.get(key)!.amount += Math.abs(t.amount);
+      });
+
+    const totalExpense = Array.from(categoryMap.values()).reduce((sum, c) => sum + c.amount, 0);
+    const expensesByCategory = Array.from(categoryMap.values()).map(c => ({
+      category: c.category,
+      amount: c.amount,
+      percentage: totalExpense > 0 ? (c.amount / totalExpense) * 100 : 0
+    }));
+
+    this.dashboardData = {
+      totalBalance: income - expense,
+      totalIncome: income,
+      totalExpense: expense,
+      currentMonth,
+      expensesByCategory,
+      recentTransactions: transactions.slice(0, 5),
+      totalSavings: transactions
+        .filter(t => t.kind === 'saving')
+        .reduce((sum, t) => sum + t.amount, 0),
+      savingsProgress: 65
+    };
   }
 
   /**
