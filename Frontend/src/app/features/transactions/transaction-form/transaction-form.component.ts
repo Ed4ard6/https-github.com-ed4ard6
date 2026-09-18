@@ -84,9 +84,51 @@ import { Category } from '../../../core/models/domain.models';
     </div>
   `,
   styles: [`
-    .form-container { padding: var(--spacing-lg); }
-    .full-width { width: 100%; margin-bottom: var(--spacing-md); }
-    .actions { display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg); }
+    :host ::ng-deep {
+      mat-card {
+        background-color: var(--color-bg-card);
+        border: 1px solid var(--color-border);
+      }
+
+      mat-card-header {
+        margin-bottom: var(--spacing-lg);
+        padding: var(--spacing-lg) var(--spacing-lg) 0;
+        border-bottom: 1px solid var(--color-border-light);
+      }
+
+      mat-card-title {
+        font-size: var(--font-size-xl);
+        color: var(--color-text-primary);
+        margin: 0;
+      }
+
+      mat-card-content {
+        padding: var(--spacing-lg);
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+      }
+    }
+
+    .form-container {
+      padding: var(--spacing-lg);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .full-width {
+      width: 100%;
+    }
+
+    .actions {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-lg);
+      justify-content: flex-end;
+    }
   `]
 })
 export class TransactionFormComponent implements OnInit {

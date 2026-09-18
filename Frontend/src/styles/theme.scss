@@ -65,3 +65,60 @@ html, body {
 * {
   box-sizing: border-box;
 }
+
+// ============================================================================
+// MATERIAL FORM FIELD STYLES
+// ============================================================================
+
+::ng-deep .mat-mdc-form-field {
+  width: 100%;
+
+  .mat-mdc-form-field-label {
+    color: var(--color-text-secondary) !important;
+  }
+
+  .mat-mdc-text-field-wrapper {
+    padding-bottom: 0 !important;
+  }
+
+  &.mat-focused {
+    .mat-mdc-form-field-label {
+      color: var(--color-primary) !important;
+    }
+  }
+}
+
+::ng-deep .mdc-text-field {
+  background-color: var(--color-bg-input) !important;
+
+  .mdc-text-field__input {
+    color: var(--color-text-primary) !important;
+    font-size: 16px !important;
+    padding: 16px 12px !important;
+    background-color: var(--color-bg-input) !important;
+  }
+}
+
+::ng-deep .mat-mdc-select {
+  width: 100%;
+
+  .mat-mdc-select-trigger {
+    color: var(--color-text-primary) !important;
+  }
+}
+
+::ng-deep .mdc-notched-outline {
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: var(--color-border) !important;
+  }
+}
+
+::ng-deep .mat-mdc-form-field-focused {
+  .mdc-notched-outline .mdc-notched-outline__leading,
+  .mdc-notched-outline .mdc-notched-outline__notch,
+  .mdc-notched-outline .mdc-notched-outline__trailing {
+    border-color: var(--color-primary) !important;
+  }
+}
