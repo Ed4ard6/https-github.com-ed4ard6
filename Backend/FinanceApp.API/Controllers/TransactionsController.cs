@@ -80,7 +80,17 @@ public class TransactionsController : ControllerBase
             _context.Transactions.Add(transaction);
             _context.SaveChanges();
 
-            return CreatedAtAction(nameof(GetTransactions), new { id = transaction.Id }, transaction);
+            // Devolver la entidad serializaría Category -> Transactions -> Category en ciclo.
+            return CreatedAtAction(nameof(GetTransactions), new { id = transaction.Id }, new TransactionDto
+            {
+                Id = transaction.Id,
+                CategoryId = transaction.CategoryId,
+                CategoryName = category.Nombre,
+                Amount = transaction.Amount,
+                Description = transaction.Description,
+                Date = transaction.Date,
+                Kind = transaction.Kind.ToString()
+            });
         }
         catch (Exception ex)
         {

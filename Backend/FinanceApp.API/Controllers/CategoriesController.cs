@@ -48,22 +48,36 @@ public class CategoriesController : ControllerBase
     {
         var userId = GetUserId();
 
-        if (!Enum.TryParse<CategoryKind>(request.Kind, true, out var kind))
-            return BadRequest("Kind inválido");
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { message = "Usuario no identificado" });
 
+        if (!Enum.TryParse<CategoryKind>(request.Kind, true, out var kind))
+            return BadRequest(new { message = $"Tipo de categoría inválido: '{request.Kind}'" });
+
+        var now = DateTime.UtcNow;
         var category = new Category
         {
+            Id = Guid.NewGuid().ToString(),
             UserId = userId,
             Nombre = request.Nombre,
             Kind = kind,
             Color = request.Color,
-            Activo = request.Activo
+            Activo = request.Activo,
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         _context.Categories.Add(category);
         _context.SaveChanges();
 
-        return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, category);
+        return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, new CategoryDto
+        {
+            Id = category.Id,
+            Nombre = category.Nombre,
+            Kind = category.Kind.ToString(),
+            Color = category.Color,
+            Activo = category.Activo
+        });
     }
 
     [HttpDelete("{id}")]
