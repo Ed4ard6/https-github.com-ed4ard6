@@ -10,7 +10,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TransactionService } from '../../core/services/transaction.service';
 import { MockDataService } from '../../core/services/mock-data.service';
-import { DashboardData, Transaction } from '../../core/models/domain.models';
+import { DashboardData, Transaction, CategoryKind } from '../../core/models/domain.models';
+import { timeout } from 'rxjs/operators';
 
 /**
  * DashboardComponent
@@ -499,17 +500,8 @@ export class DashboardComponent implements OnInit {
 
   loadDashboardData(): void {
     this.isLoading = true;
-    this.transactionService.getTransactions().subscribe({
-      next: (transactions) => {
-        this.processDashboardData(transactions);
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.warn('Error loading transactions, using mock data:', error);
-        this.dashboardData = this.mockDataService.getDashboardData();
-        this.isLoading = false;
-      }
-    });
+    this.dashboardData = this.mockDataService.getDashboardData();
+    this.isLoading = false;
   }
 
   private processDashboardData(transactions: Transaction[]): void {
