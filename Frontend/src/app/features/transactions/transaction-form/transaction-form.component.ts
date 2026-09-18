@@ -7,7 +7,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
-import { MatErrorModule } from '@angular/material/form-field';
 import { Router } from '@angular/router';
 import { TransactionService } from '../../../core/services/transaction.service';
 import { CategoryService } from '../../../core/services/category.service';
@@ -25,8 +24,7 @@ import { Category } from '../../../core/models/domain.models';
     MatSelectModule,
     MatButtonModule,
     MatCardModule,
-    MatSnackBarModule,
-    MatErrorModule
+    MatSnackBarModule
   ],
   template: `
     <div class="form-container">
