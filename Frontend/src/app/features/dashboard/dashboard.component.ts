@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatGridListModule } from '@angular/material/grid-list';
@@ -482,6 +482,7 @@ export class DashboardComponent implements OnInit {
   private transactionService = inject(TransactionService);
   private mockDataService = inject(MockDataService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   isLoading = true;
   dashboardData: DashboardData = {
@@ -501,6 +502,8 @@ export class DashboardComponent implements OnInit {
 
   loadDashboardData(): void {
     this.isLoading = true;
+    this.cdr.detectChanges();
+
     const subscription = this.transactionService.getTransactions().pipe(
       timeout(10000),
       catchError((error) => {
@@ -519,12 +522,14 @@ export class DashboardComponent implements OnInit {
           }
         } finally {
           this.isLoading = false;
+          this.cdr.detectChanges();
         }
       },
       error: (error) => {
         console.error('❌ Dashboard error:', error);
         this.dashboardData = this.mockDataService.getDashboardData();
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
