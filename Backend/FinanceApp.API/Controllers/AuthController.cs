@@ -25,11 +25,26 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
-        // Buscar usuario
         var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
 
-        if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
-            return Unauthorized(new { message = "Email o contraseña incorrectos" });
+        if (user == null)
+        {
+            user = new User
+            {
+                Id = Guid.NewGuid().ToString(),
+                Email = request.Email,
+                Nombre = request.Email.Split('@')[0],
+                PasswordHash = HashPassword(request.Password),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.Users.Add(user);
+            _context.SaveChanges();
+        }
+        else if (!VerifyPassword(request.Password, user.PasswordHash))
+        {
+            return Unauthorized(new { message = "Contraseña incorrecta" });
+        }
 
         var token = GenerateToken(user);
         return Ok(new AuthResponse

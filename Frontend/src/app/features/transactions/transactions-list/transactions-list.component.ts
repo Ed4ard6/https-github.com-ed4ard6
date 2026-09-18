@@ -7,6 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
+import { TransactionService } from '../../../core/services/transaction.service';
 import { MockDataService } from '../../../core/services/mock-data.service';
 import { Transaction } from '../../../core/models/domain.models';
 
@@ -100,14 +101,31 @@ import { Transaction } from '../../../core/models/domain.models';
   `]
 })
 export class TransactionsListComponent implements OnInit {
+  private transactionService = inject(TransactionService);
   private mockDataService = inject(MockDataService);
   private router = inject(Router);
 
   transactions: Transaction[] = [];
   displayedColumns = ['date', 'category', 'description', 'amount', 'actions'];
+  isLoading = true;
 
   ngOnInit() {
-    this.transactions = this.mockDataService.getTransactions();
+    this.loadTransactions();
+  }
+
+  loadTransactions() {
+    this.isLoading = true;
+    this.transactionService.getTransactions().subscribe({
+      next: (data) => {
+        this.transactions = data;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.warn('Error loading transactions from API, using mock data:', error);
+        this.transactions = this.mockDataService.getTransactions();
+        this.isLoading = false;
+      }
+    });
   }
 
   formatCurrency(amount: number) {
@@ -123,7 +141,14 @@ export class TransactionsListComponent implements OnInit {
   }
 
   deleteTransaction(id: string) {
-    this.transactions = this.transactions.filter(t => t.id !== id);
+    this.transactionService.deleteTransaction(id).subscribe({
+      next: () => {
+        this.transactions = this.transactions.filter(t => t.id !== id);
+      },
+      error: (error) => {
+        console.error('Error deleting transaction:', error);
+      }
+    });
   }
 
   navigateTo(path: string) {

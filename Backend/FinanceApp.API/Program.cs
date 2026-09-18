@@ -11,9 +11,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Entity Framework Core con PostgreSQL
+// Entity Framework Core con SQLite
 builder.Services.AddDbContext<FinanceDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
 // JWT Authentication

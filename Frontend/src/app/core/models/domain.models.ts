@@ -207,3 +207,18 @@ export interface MonthlyAggregate {
     [categoryId: string]: number;
   };
 }
+
+export interface CategoryCreateRequest {
+  nombre: string;
+  kind: CategoryKind;
+  color: string;
+  parentId?: string;
+}
+
+export interface TransactionCreateRequest {
+  categoryId: string;
+  amount: number;
+  description: string;
+  date: Date;
+  kind: TransactionKind;
+}

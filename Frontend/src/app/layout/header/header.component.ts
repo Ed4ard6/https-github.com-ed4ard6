@@ -6,14 +6,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from '../../core/services/auth.service';
 import { User } from '../../core/models/domain.models';
 
-/**
- * HeaderComponent
- * Barra de navegación principal con logo, menú y usuario
- * Responsive para desktop y mobile
- */
 @Component({
   selector: 'app-header',
   standalone: true,
@@ -25,7 +21,8 @@ import { User } from '../../core/models/domain.models';
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
-    MatSidenavModule
+    MatSidenavModule,
+    MatDividerModule
   ],
   template: `
     <mat-toolbar color="primary" class="app-header">

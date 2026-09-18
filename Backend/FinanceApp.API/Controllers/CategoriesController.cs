@@ -3,6 +3,7 @@ using FinanceApp.Domain.Entities;
 using FinanceApp.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FinanceApp.API.Controllers;
 
