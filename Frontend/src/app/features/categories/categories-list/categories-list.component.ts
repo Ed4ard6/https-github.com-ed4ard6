@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { Router } from '@angular/router';
 import { MockDataService } from '../../../core/services/mock-data.service';
+import { CategoryService } from '../../../core/services/category.service';
 import { Category } from '../../../core/models/domain.models';
 
 @Component({
@@ -73,6 +74,7 @@ import { Category } from '../../../core/models/domain.models';
   `]
 })
 export class CategoriesListComponent implements OnInit {
+  private categoryService = inject(CategoryService);
   private mockDataService = inject(MockDataService);
   private router = inject(Router);
 
@@ -80,7 +82,19 @@ export class CategoriesListComponent implements OnInit {
   displayedColumns = ['nombre', 'kind', 'status', 'actions'];
 
   ngOnInit() {
-    this.categories = this.mockDataService.getCategories();
+    this.loadCategories();
+  }
+
+  loadCategories() {
+    this.categoryService.getCategories().subscribe({
+      next: (data) => {
+        this.categories = data;
+      },
+      error: (error) => {
+        console.warn('Error loading categories from API, using mock data:', error);
+        this.categories = this.mockDataService.getCategories();
+      }
+    });
   }
 
   editCategory(id: string) {
