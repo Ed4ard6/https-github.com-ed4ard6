@@ -11,7 +11,8 @@ import { Router } from '@angular/router';
 import { TransactionService } from '../../core/services/transaction.service';
 import { MockDataService } from '../../core/services/mock-data.service';
 import { DashboardData, Transaction, CategoryKind } from '../../core/models/domain.models';
-import { timeout } from 'rxjs/operators';
+import { timeout, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 /**
  * DashboardComponent
@@ -500,8 +501,26 @@ export class DashboardComponent implements OnInit {
 
   loadDashboardData(): void {
     this.isLoading = true;
-    this.dashboardData = this.mockDataService.getDashboardData();
-    this.isLoading = false;
+    this.transactionService.getTransactions().pipe(
+      timeout(3000),
+      catchError(() => {
+        console.log('Backend timeout, using mock data');
+        return of([]);
+      })
+    ).subscribe({
+      next: (transactions) => {
+        if (transactions.length > 0) {
+          this.processDashboardData(transactions);
+        } else {
+          this.dashboardData = this.mockDataService.getDashboardData();
+        }
+        this.isLoading = false;
+      },
+      error: () => {
+        this.dashboardData = this.mockDataService.getDashboardData();
+        this.isLoading = false;
+      }
+    });
   }
 
   private processDashboardData(transactions: Transaction[]): void {
