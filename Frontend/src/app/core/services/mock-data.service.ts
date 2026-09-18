@@ -32,9 +32,10 @@ export class MockDataService {
   };
 
   private mockCategories: Category[] = [
+    // DEBE COINCIDIR CON BACKEND DataSeeder.cs
     // Categorías de Ingresos
     {
-      id: 'cat-1',
+      id: 'cat-001',
       userId: '1',
       nombre: 'Salario',
       kind: CategoryKind.INCOME,
@@ -43,19 +44,9 @@ export class MockDataService {
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date()
     },
-    {
-      id: 'cat-2',
-      userId: '1',
-      nombre: 'Freelance',
-      kind: CategoryKind.INCOME,
-      color: '#10b981',
-      activo: true,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date()
-    },
     // Categorías de Gastos
     {
-      id: 'cat-3',
+      id: 'cat-002',
       userId: '1',
       nombre: 'Alimentación',
       kind: CategoryKind.EXPENSE,
@@ -65,39 +56,39 @@ export class MockDataService {
       updatedAt: new Date()
     },
     {
-      id: 'cat-4',
+      id: 'cat-003',
       userId: '1',
       nombre: 'Transporte',
       kind: CategoryKind.EXPENSE,
-      color: '#f59e0b',
+      color: '#3b82f6',
       activo: true,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date()
     },
     {
-      id: 'cat-5',
+      id: 'cat-004',
       userId: '1',
-      nombre: 'Servicios',
+      nombre: 'Entretenimiento',
       kind: CategoryKind.EXPENSE,
-      color: '#ef4444',
-      activo: true,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date()
-    },
-    // Categorías de Deuda
-    {
-      id: 'cat-6',
-      userId: '1',
-      nombre: 'Deuda Tarjeta Crédito',
-      kind: CategoryKind.DEBT,
-      color: '#ef4444',
+      color: '#8b5cf6',
       activo: true,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date()
     },
     // Categorías de Ahorro
     {
-      id: 'cat-7',
+      id: 'cat-005',
+      userId: '1',
+      nombre: 'Ahorros',
+      kind: CategoryKind.SAVING,
+      color: '#06b6d4',
+      activo: true,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date()
+    },
+    // Categorías adicionales de Deuda (para mock)
+    {
+      id: 'cat-006',
       userId: '1',
       nombre: 'Fondo de Emergencia',
       kind: CategoryKind.SAVING,
@@ -111,9 +102,9 @@ export class MockDataService {
   private mockTransactions: Transaction[] = [
     // Ingresos
     {
-      id: 'txn-1',
+      id: 'txn-001',
       userId: '1',
-      categoryId: 'cat-1',
+      categoryId: 'cat-001',
       category: this.mockCategories[0],
       amount: 3000000,
       description: 'Salario mensual',
@@ -124,10 +115,10 @@ export class MockDataService {
     },
     // Gastos
     {
-      id: 'txn-2',
+      id: 'txn-002',
       userId: '1',
-      categoryId: 'cat-3',
-      category: this.mockCategories[2],
+      categoryId: 'cat-002',
+      category: this.mockCategories[1],
       amount: -450000,
       description: 'Compras supermercado',
       date: new Date(2026, 8, 5),
@@ -136,10 +127,10 @@ export class MockDataService {
       updatedAt: new Date()
     },
     {
-      id: 'txn-3',
+      id: 'txn-003',
       userId: '1',
-      categoryId: 'cat-4',
-      category: this.mockCategories[3],
+      categoryId: 'cat-003',
+      category: this.mockCategories[2],
       amount: -80000,
       description: 'Gasolina',
       date: new Date(2026, 8, 6),
@@ -148,14 +139,26 @@ export class MockDataService {
       updatedAt: new Date()
     },
     {
-      id: 'txn-4',
+      id: 'txn-004',
       userId: '1',
-      categoryId: 'cat-5',
-      category: this.mockCategories[4],
-      amount: -200000,
-      description: 'Luz, agua e internet',
-      date: new Date(2026, 8, 8),
+      categoryId: 'cat-004',
+      category: this.mockCategories[3],
+      amount: -80000,
+      description: 'Cine',
+      date: new Date(2026, 8, 7),
       kind: 'expense',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: 'txn-005',
+      userId: '1',
+      categoryId: 'cat-005',
+      category: this.mockCategories[4],
+      amount: 500000,
+      description: 'Ahorro mensual',
+      date: new Date(2026, 8, 8),
+      kind: 'saving',
       createdAt: new Date(),
       updatedAt: new Date()
     }
