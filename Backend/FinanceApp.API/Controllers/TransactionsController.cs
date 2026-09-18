@@ -47,25 +47,44 @@ public class TransactionsController : ControllerBase
     [HttpPost]
     public IActionResult CreateTransaction([FromBody] CreateTransactionRequest request)
     {
-        var userId = GetUserId();
-
-        if (!Enum.TryParse<TransactionKind>(request.Kind, true, out var kind))
-            return BadRequest("Kind inválido");
-
-        var transaction = new Transaction
+        try
         {
-            UserId = userId,
-            CategoryId = request.CategoryId,
-            Amount = request.Amount,
-            Description = request.Description,
-            Date = request.Date,
-            Kind = kind
-        };
+            var userId = GetUserId();
 
-        _context.Transactions.Add(transaction);
-        _context.SaveChanges();
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Usuario no identificado");
 
-        return CreatedAtAction(nameof(GetTransactions), new { id = transaction.Id }, transaction);
+            if (!Enum.TryParse<TransactionKind>(request.Kind, true, out var kind))
+                return BadRequest("Kind inválido");
+
+            // Validar que la categoría exista y pertenezca al usuario
+            var category = _context.Categories.FirstOrDefault(c => c.Id == request.CategoryId && c.UserId == userId);
+            if (category == null)
+                return BadRequest("Categoría no encontrada o no pertenece al usuario");
+
+            var transaction = new Transaction
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = userId,
+                CategoryId = request.CategoryId,
+                Amount = request.Amount,
+                Description = request.Description,
+                Date = request.Date,
+                Kind = kind,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Transactions.Add(transaction);
+            _context.SaveChanges();
+
+            return CreatedAtAction(nameof(GetTransactions), new { id = transaction.Id }, transaction);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error creating transaction: {ex.Message}");
+            return StatusCode(500, new { message = $"Error interno: {ex.Message}" });
+        }
     }
 
     [HttpDelete("{id}")]
