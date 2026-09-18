@@ -7,6 +7,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { MatErrorModule } from '@angular/material/form-field';
 import { Router } from '@angular/router';
 import { TransactionService } from '../../../core/services/transaction.service';
 import { CategoryService } from '../../../core/services/category.service';
@@ -24,7 +25,8 @@ import { Category } from '../../../core/models/domain.models';
     MatSelectModule,
     MatButtonModule,
     MatCardModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatErrorModule
   ],
   template: `
     <div class="form-container">
@@ -55,7 +57,13 @@ import { Category } from '../../../core/models/domain.models';
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Monto</mat-label>
-              <input matInput type="number" formControlName="amount" />
+              <input matInput type="number" formControlName="amount" step="0.01" />
+              <mat-error *ngIf="form.get('amount')?.hasError('required')">
+                Monto es requerido
+              </mat-error>
+              <mat-error *ngIf="form.get('amount')?.hasError('min')">
+                Monto debe ser mayor a 0
+              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
@@ -94,11 +102,11 @@ export class TransactionFormComponent implements OnInit {
   categories: Category[] = [];
   isLoading = false;
   form = this.fb.group({
-    kind: ['expense', Validators.required],
-    categoryId: ['', Validators.required],
-    amount: [0, Validators.required],
-    description: [''],
-    date: [new Date().toISOString().split('T')[0]]
+    kind: ['expense', [Validators.required]],
+    categoryId: ['', [Validators.required]],
+    amount: [0, [Validators.required, Validators.min(0.01)]],
+    description: ['', [Validators.maxLength(500)]],
+    date: [new Date().toISOString().split('T')[0], [Validators.required]]
   });
 
   ngOnInit() {

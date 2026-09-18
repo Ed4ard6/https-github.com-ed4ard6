@@ -1,4 +1,6 @@
 using FinanceApp.Infrastructure.Data;
+using FinanceApp.Application.Validators;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -7,9 +9,15 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Agregar servicios
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ValidationFilter>();
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
 // Entity Framework Core con SQLite
 builder.Services.AddDbContext<FinanceDbContext>(options =>
@@ -37,13 +45,16 @@ builder.Services
         };
     });
 
-// CORS para conectar con Angular
+// CORS - Restrict to environment
 builder.Services.AddCors(options =>
 {
+    var corsOrigins = builder.Configuration["CORS_Origins"]?.Split(';')
+        ?? new[] { "http://localhost:4200", "https://localhost:4200" };
+
     options.AddPolicy("AllowAngular", policyBuilder =>
     {
         policyBuilder
-            .WithOrigins("http://localhost:4200", "https://localhost:4200")
+            .WithOrigins(corsOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader();
     });
