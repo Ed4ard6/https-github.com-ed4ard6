@@ -183,28 +183,42 @@ export class TransactionFormComponent implements OnInit {
   }
 
   onSubmit() {
-    if (this.form.valid) {
-      this.isLoading = true;
-      const value = this.form.value;
+    console.log('📝 Form valid:', this.form.valid);
+    console.log('📝 Form errors:', this.form.errors);
+    console.log('📝 Amount control errors:', this.form.get('amount')?.errors);
+    console.log('📝 Form value:', this.form.value);
 
-      this.transactionService.createTransaction({
-        categoryId: value.categoryId || '',
-        amount: parseFloat(value.amount?.toString() || '0'),
-        description: value.description || '',
-        date: new Date(value.date || new Date()),
-        kind: value.kind as any
-      }).subscribe({
-        next: () => {
-          this.snackBar.open('✅ Transacción guardada', 'Cerrar', { duration: 3000 });
-          this.router.navigate(['/transactions']);
-        },
-        error: (error) => {
-          this.snackBar.open('❌ Error al guardar', 'Cerrar', { duration: 3000 });
-          console.error('Error:', error);
-          this.isLoading = false;
-        }
-      });
+    if (!this.form.valid) {
+      this.snackBar.open('❌ Por favor completa todos los campos requeridos', 'Cerrar', { duration: 4000 });
+      return;
     }
+
+    this.isLoading = true;
+    const value = this.form.value;
+
+    const payload = {
+      categoryId: value.categoryId || '',
+      amount: parseFloat(value.amount?.toString() || '0'),
+      description: value.description || '',
+      date: new Date(value.date || new Date()),
+      kind: value.kind as any
+    };
+
+    console.log('📤 Sending payload:', payload);
+
+    this.transactionService.createTransaction(payload).subscribe({
+      next: (response) => {
+        console.log('✅ Transacción guardada:', response);
+        this.snackBar.open('✅ Transacción guardada correctamente', 'Cerrar', { duration: 3000 });
+        this.router.navigate(['/transactions']);
+      },
+      error: (error) => {
+        console.error('❌ Error al guardar:', error);
+        const errorMsg = error?.error?.message || error?.message || 'Error desconocido';
+        this.snackBar.open(`❌ Error: ${errorMsg}`, 'Cerrar', { duration: 5000 });
+        this.isLoading = false;
+      }
+    });
   }
 
   navigateTo(path: string) {
