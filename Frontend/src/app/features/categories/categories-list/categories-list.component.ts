@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +8,8 @@ import { Router } from '@angular/router';
 import { MockDataService } from '../../../core/services/mock-data.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Category } from '../../../core/models/domain.models';
+import { timeout, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-categories-list',
@@ -77,6 +79,7 @@ export class CategoriesListComponent implements OnInit {
   private categoryService = inject(CategoryService);
   private mockDataService = inject(MockDataService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   categories: Category[] = [];
   displayedColumns = ['nombre', 'kind', 'status', 'actions'];
@@ -86,13 +89,27 @@ export class CategoriesListComponent implements OnInit {
   }
 
   loadCategories() {
-    this.categoryService.getCategories().subscribe({
+    this.categoryService.getCategories().pipe(
+      timeout(8000),
+      catchError((error) => {
+        console.warn('⚠️ Error loading categories from API:', error?.message);
+        return of([]);
+      })
+    ).subscribe({
       next: (data) => {
-        this.categories = data;
+        if (data && Array.isArray(data) && data.length > 0) {
+          console.log('✅ Loaded categories from API:', data.length);
+          this.categories = data;
+        } else {
+          console.log('⚠️ Empty categories, using mock data');
+          this.categories = this.mockDataService.getCategories();
+        }
+        this.cdr.detectChanges();
       },
       error: (error) => {
-        console.warn('Error loading categories from API, using mock data:', error);
+        console.error('❌ Categories error:', error);
         this.categories = this.mockDataService.getCategories();
+        this.cdr.detectChanges();
       }
     });
   }
