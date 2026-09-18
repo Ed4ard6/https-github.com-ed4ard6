@@ -58,12 +58,11 @@ public class TransactionsController : ControllerBase
                 return Unauthorized("Usuario no identificado");
 
             if (!Enum.TryParse<TransactionKind>(request.Kind, true, out var kind))
-                return BadRequest("Kind inválido");
+                return BadRequest(new { message = $"Tipo de transacción inválido: '{request.Kind}'" });
 
-            // Validar que la categoría exista y pertenezca al usuario
             var category = _context.Categories.FirstOrDefault(c => c.Id == request.CategoryId && c.UserId == userId);
             if (category == null)
-                return BadRequest("Categoría no encontrada o no pertenece al usuario");
+                return BadRequest(new { message = $"La categoría '{request.CategoryId}' no existe para este usuario" });
 
             var transaction = new Transaction
             {

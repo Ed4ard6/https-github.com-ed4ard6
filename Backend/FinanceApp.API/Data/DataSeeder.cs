@@ -5,46 +5,102 @@ namespace FinanceApp.API.Data;
 
 public class DataSeeder
 {
+    private static readonly (string Nombre, CategoryKind Kind, string Color)[] DefaultCategories =
+    {
+        ("Salario", CategoryKind.Income, "#10b981"),
+        ("Alimentación", CategoryKind.Expense, "#f59e0b"),
+        ("Transporte", CategoryKind.Expense, "#3b82f6"),
+        ("Entretenimiento", CategoryKind.Expense, "#8b5cf6"),
+        ("Ahorros", CategoryKind.Saving, "#06b6d4")
+    };
+
     public static void SeedData(FinanceDbContext context)
     {
-        if (context.Users.Any()) return;
+        var isFirstRun = !context.Users.Any();
 
-        var demoUser = new User
+        if (isFirstRun)
         {
-            Id = "demo-user-001",
-            Nombre = "Usuario Demo",
-            Email = "demo@example.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("demo123"),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            var demoUser = new User
+            {
+                Id = "demo-user-001",
+                Nombre = "Usuario Demo",
+                Email = "demo@example.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("demo123"),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
-        context.Users.Add(demoUser);
-        context.SaveChanges();
+            context.Users.Add(demoUser);
+            context.SaveChanges();
 
-        var categories = new[]
+            SeedCategoriesForUser(context, demoUser.Id);
+            SeedDemoTransactions(context, demoUser.Id);
+        }
+
+        // Un usuario sin categorías no puede registrar transacciones,
+        // así que todos reciben el set por defecto.
+        foreach (var userId in context.Users.Select(u => u.Id).ToList())
         {
-            new Category { Id = "cat-001", UserId = demoUser.Id, Nombre = "Salario", Kind = CategoryKind.Income, Color = "#10b981", Activo = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new Category { Id = "cat-002", UserId = demoUser.Id, Nombre = "Alimentación", Kind = CategoryKind.Expense, Color = "#f59e0b", Activo = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new Category { Id = "cat-003", UserId = demoUser.Id, Nombre = "Transporte", Kind = CategoryKind.Expense, Color = "#3b82f6", Activo = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new Category { Id = "cat-004", UserId = demoUser.Id, Nombre = "Entretenimiento", Kind = CategoryKind.Expense, Color = "#8b5cf6", Activo = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new Category { Id = "cat-005", UserId = demoUser.Id, Nombre = "Ahorros", Kind = CategoryKind.Saving, Color = "#06b6d4", Activo = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
-        };
+            SeedCategoriesForUser(context, userId);
+        }
+    }
+
+    public static void SeedCategoriesForUser(FinanceDbContext context, string userId)
+    {
+        if (context.Categories.Any(c => c.UserId == userId)) return;
+
+        var now = DateTime.UtcNow;
+        var categories = DefaultCategories.Select(c => new Category
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserId = userId,
+            Nombre = c.Nombre,
+            Kind = c.Kind,
+            Color = c.Color,
+            Activo = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        }).ToList();
 
         context.Categories.AddRange(categories);
         context.SaveChanges();
+    }
+
+    private static void SeedDemoTransactions(FinanceDbContext context, string userId)
+    {
+        var categories = context.Categories
+            .Where(c => c.UserId == userId)
+            .ToDictionary(c => c.Nombre, c => c.Id);
 
         var now = DateTime.UtcNow;
         var transactions = new[]
         {
-            new Transaction { Id = "txn-001", UserId = demoUser.Id, CategoryId = "cat-001", Amount = 3000000, Description = "Salario mensual", Date = now.AddDays(-10), Kind = TransactionKind.Income, CreatedAt = now, UpdatedAt = now },
-            new Transaction { Id = "txn-002", UserId = demoUser.Id, CategoryId = "cat-002", Amount = -150000, Description = "Supermercado", Date = now.AddDays(-5), Kind = TransactionKind.Expense, CreatedAt = now, UpdatedAt = now },
-            new Transaction { Id = "txn-003", UserId = demoUser.Id, CategoryId = "cat-003", Amount = -50000, Description = "Gasolina", Date = now.AddDays(-4), Kind = TransactionKind.Expense, CreatedAt = now, UpdatedAt = now },
-            new Transaction { Id = "txn-004", UserId = demoUser.Id, CategoryId = "cat-004", Amount = -80000, Description = "Cine", Date = now.AddDays(-3), Kind = TransactionKind.Expense, CreatedAt = now, UpdatedAt = now },
-            new Transaction { Id = "txn-005", UserId = demoUser.Id, CategoryId = "cat-005", Amount = 500000, Description = "Ahorro mensual", Date = now.AddDays(-2), Kind = TransactionKind.Saving, CreatedAt = now, UpdatedAt = now }
+            NewTransaction(userId, categories["Salario"], 3000000, "Salario mensual", now.AddDays(-10), TransactionKind.Income),
+            NewTransaction(userId, categories["Alimentación"], -150000, "Supermercado", now.AddDays(-5), TransactionKind.Expense),
+            NewTransaction(userId, categories["Transporte"], -50000, "Gasolina", now.AddDays(-4), TransactionKind.Expense),
+            NewTransaction(userId, categories["Entretenimiento"], -80000, "Cine", now.AddDays(-3), TransactionKind.Expense),
+            NewTransaction(userId, categories["Ahorros"], 500000, "Ahorro mensual", now.AddDays(-2), TransactionKind.Saving)
         };
 
         context.Transactions.AddRange(transactions);
         context.SaveChanges();
+    }
+
+    private static Transaction NewTransaction(
+        string userId, string categoryId, decimal amount, string description, DateTime date, TransactionKind kind)
+    {
+        var now = DateTime.UtcNow;
+        return new Transaction
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserId = userId,
+            CategoryId = categoryId,
+            Amount = amount,
+            Description = description,
+            Date = date,
+            Kind = kind,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
     }
 }

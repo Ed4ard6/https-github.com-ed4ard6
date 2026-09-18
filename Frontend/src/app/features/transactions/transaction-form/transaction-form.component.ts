@@ -8,11 +8,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import { timeout, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { timeout } from 'rxjs/operators';
 import { TransactionService } from '../../../core/services/transaction.service';
 import { CategoryService } from '../../../core/services/category.service';
-import { MockDataService } from '../../../core/services/mock-data.service';
 import { Category } from '../../../core/models/domain.models';
 
 @Component({
@@ -138,7 +136,6 @@ export class TransactionFormComponent implements OnInit {
   private router = inject(Router);
   private transactionService = inject(TransactionService);
   private categoryService = inject(CategoryService);
-  private mockDataService = inject(MockDataService);
   private snackBar = inject(MatSnackBar);
   private cdr = inject(ChangeDetectorRef);
 
@@ -156,27 +153,19 @@ export class TransactionFormComponent implements OnInit {
     this.loadCategories();
   }
 
+  // Sin fallback a mock: una categoría inventada se rechaza al guardar.
   loadCategories() {
-    this.categoryService.getCategories().pipe(
-      timeout(8000),
-      catchError((error) => {
-        console.warn('⚠️ Error loading categories for form:', error?.message);
-        return of([]);
-      })
-    ).subscribe({
+    this.categoryService.getCategories().pipe(timeout(8000)).subscribe({
       next: (data) => {
-        if (data && Array.isArray(data) && data.length > 0) {
-          console.log('✅ Loaded categories for form:', data.length);
-          this.categories = data;
-        } else {
-          console.log('⚠️ Empty categories, using mock data for form');
-          this.categories = this.mockDataService.getCategories();
+        this.categories = data ?? [];
+        if (this.categories.length === 0) {
+          this.snackBar.open('No tienes categorías todavía. Crea una primero.', 'Cerrar', { duration: 5000 });
         }
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('❌ Error loading categories:', error);
-        this.categories = this.mockDataService.getCategories();
+        console.error('Error cargando categorías:', error);
+        this.snackBar.open('No se pudieron cargar las categorías', 'Cerrar', { duration: 5000 });
         this.cdr.detectChanges();
       }
     });

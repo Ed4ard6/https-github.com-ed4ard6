@@ -1,3 +1,4 @@
+using FinanceApp.API.Data;
 using FinanceApp.Application.DTOs;
 using FinanceApp.Domain.Entities;
 using FinanceApp.Infrastructure.Data;
@@ -40,6 +41,7 @@ public class AuthController : ControllerBase
             };
             _context.Users.Add(user);
             _context.SaveChanges();
+            DataSeeder.SeedCategoriesForUser(_context, user.Id);
         }
         else if (!VerifyPassword(request.Password, user.PasswordHash))
         {
@@ -69,13 +71,17 @@ public class AuthController : ControllerBase
 
         var user = new User
         {
+            Id = Guid.NewGuid().ToString(),
             Nombre = request.Nombre,
             Email = request.Email,
-            PasswordHash = HashPassword(request.Password)
+            PasswordHash = HashPassword(request.Password),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         _context.Users.Add(user);
         _context.SaveChanges();
+        DataSeeder.SeedCategoriesForUser(_context, user.Id);
 
         var token = GenerateToken(user);
         return Ok(new AuthResponse
