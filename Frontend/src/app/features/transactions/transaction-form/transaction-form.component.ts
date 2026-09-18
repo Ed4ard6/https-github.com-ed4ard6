@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,7 +6,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { TransactionService } from '../../../core/services/transaction.service';
+import { CategoryService } from '../../../core/services/category.service';
 import { MockDataService } from '../../../core/services/mock-data.service';
 import { Category } from '../../../core/models/domain.models';
 
@@ -20,7 +23,8 @@ import { Category } from '../../../core/models/domain.models';
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    MatCardModule
+    MatCardModule,
+    MatSnackBarModule
   ],
   template: `
     <div class="form-container">
@@ -79,12 +83,16 @@ import { Category } from '../../../core/models/domain.models';
     .actions { display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg); }
   `]
 })
-export class TransactionFormComponent {
+export class TransactionFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private transactionService = inject(TransactionService);
+  private categoryService = inject(CategoryService);
   private mockDataService = inject(MockDataService);
+  private snackBar = inject(MatSnackBar);
 
   categories: Category[] = [];
+  isLoading = false;
   form = this.fb.group({
     kind: ['expense', Validators.required],
     categoryId: ['', Validators.required],
@@ -93,13 +101,39 @@ export class TransactionFormComponent {
     date: [new Date().toISOString().split('T')[0]]
   });
 
-  constructor() {
-    this.categories = this.mockDataService.getCategories();
+  ngOnInit() {
+    this.loadCategories();
+  }
+
+  loadCategories() {
+    this.categoryService.getCategories().subscribe({
+      next: (data) => this.categories = data,
+      error: () => this.categories = this.mockDataService.getCategories()
+    });
   }
 
   onSubmit() {
     if (this.form.valid) {
-      this.navigateTo('/transactions');
+      this.isLoading = true;
+      const value = this.form.value;
+
+      this.transactionService.createTransaction({
+        categoryId: value.categoryId || '',
+        amount: parseFloat(value.amount?.toString() || '0'),
+        description: value.description || '',
+        date: new Date(value.date || new Date()),
+        kind: value.kind as any
+      }).subscribe({
+        next: () => {
+          this.snackBar.open('✅ Transacción guardada', 'Cerrar', { duration: 3000 });
+          this.router.navigate(['/transactions']);
+        },
+        error: (error) => {
+          this.snackBar.open('❌ Error al guardar', 'Cerrar', { duration: 3000 });
+          console.error('Error:', error);
+          this.isLoading = false;
+        }
+      });
     }
   }
 
