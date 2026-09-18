@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 import { TransactionService } from '../../core/services/transaction.service';
 import { MockDataService } from '../../core/services/mock-data.service';
 import { DashboardData, Transaction, CategoryKind } from '../../core/models/domain.models';
-import { timeout, catchError } from 'rxjs/operators';
+import { timeout, catchError, finalize } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 /**
@@ -502,25 +502,27 @@ export class DashboardComponent implements OnInit {
   loadDashboardData(): void {
     this.isLoading = true;
     this.transactionService.getTransactions().pipe(
-      timeout(5000),
+      timeout(10000),
       catchError((error) => {
         console.warn('Error loading transactions:', error);
         return of([]);
+      }),
+      finalize(() => {
+        this.isLoading = false;
       })
     ).subscribe({
       next: (transactions) => {
         if (transactions && transactions.length > 0) {
+          console.log('Loaded transactions from API:', transactions.length);
           this.processDashboardData(transactions);
         } else {
           console.log('No transactions or empty response, using mock data');
           this.dashboardData = this.mockDataService.getDashboardData();
         }
-        this.isLoading = false;
       },
       error: (error) => {
         console.error('Dashboard error:', error);
         this.dashboardData = this.mockDataService.getDashboardData();
-        this.isLoading = false;
       }
     });
   }
