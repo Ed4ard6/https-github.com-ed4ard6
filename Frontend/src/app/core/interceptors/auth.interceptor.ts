@@ -20,18 +20,25 @@ export class AuthInterceptor implements HttpInterceptor {
     const token = this.authService.getToken();
 
     if (token) {
+      console.log('🔐 Agregando token al request');
       request = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
         }
       });
+    } else {
+      console.warn('⚠️ No hay token disponible');
     }
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401) {
+        console.error('❌ HTTP Error:', error.status, error.message);
+
+        // Solo desloguear si es 401 Y el usuario estaba logueado
+        if (error.status === 401 && token) {
+          console.error('🚪 Token inválido, deslogueando...');
           this.authService.logout().subscribe(() => {
-            this.router.navigate(['/login']);
+            this.router.navigate(['/auth/login']);
           });
         }
         return throwError(() => error);
