@@ -28,9 +28,9 @@ import { User } from '../../core/models/domain.models';
     <mat-toolbar color="primary" class="app-header">
       <!-- Logo -->
       <div class="logo">
-        <span class="logo-text">💰 Finance App</span>
+        <div class="logo-emoji">💰</div>
+        <span class="logo-text">Finance App</span>
       </div>
-
 
       <!-- User Menu -->
       <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-menu-trigger">
@@ -69,6 +69,14 @@ import { User } from '../../core/models/domain.models';
         display: flex;
         align-items: center;
         gap: var(--spacing-sm);
+        min-width: fit-content;
+      }
+
+      .logo-emoji {
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .logo-text {
@@ -76,6 +84,7 @@ import { User } from '../../core/models/domain.models';
         font-weight: 700;
         color: var(--color-primary);
         text-decoration: none;
+        white-space: nowrap;
       }
 
 

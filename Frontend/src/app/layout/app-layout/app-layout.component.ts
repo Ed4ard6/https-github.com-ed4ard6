@@ -25,16 +25,7 @@ import { AuthService } from '../../core/services/auth.service';
   template: `
     <div class="layout-wrapper">
       <!-- Header -->
-      <header class="app-header">
-        <div class="header-content">
-          <div class="logo-section">
-            <div class="logo">💰</div>
-            <h1>Finance App</h1>
-          </div>
-          <div class="spacer"></div>
-          <app-header (logoutClick)="logout()"></app-header>
-        </div>
-      </header>
+      <app-header (logoutClick)="logout()"></app-header>
 
       <!-- Contenido con Sidebar -->
       <div class="content-wrapper">

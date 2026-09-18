@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,6 +8,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { timeout, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { TransactionService } from '../../../core/services/transaction.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { MockDataService } from '../../../core/services/mock-data.service';
@@ -138,6 +140,7 @@ export class TransactionFormComponent implements OnInit {
   private categoryService = inject(CategoryService);
   private mockDataService = inject(MockDataService);
   private snackBar = inject(MatSnackBar);
+  private cdr = inject(ChangeDetectorRef);
 
   categories: Category[] = [];
   isLoading = false;
@@ -154,9 +157,28 @@ export class TransactionFormComponent implements OnInit {
   }
 
   loadCategories() {
-    this.categoryService.getCategories().subscribe({
-      next: (data) => this.categories = data,
-      error: () => this.categories = this.mockDataService.getCategories()
+    this.categoryService.getCategories().pipe(
+      timeout(8000),
+      catchError((error) => {
+        console.warn('⚠️ Error loading categories for form:', error?.message);
+        return of([]);
+      })
+    ).subscribe({
+      next: (data) => {
+        if (data && Array.isArray(data) && data.length > 0) {
+          console.log('✅ Loaded categories for form:', data.length);
+          this.categories = data;
+        } else {
+          console.log('⚠️ Empty categories, using mock data for form');
+          this.categories = this.mockDataService.getCategories();
+        }
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('❌ Error loading categories:', error);
+        this.categories = this.mockDataService.getCategories();
+        this.cdr.detectChanges();
+      }
     });
   }
 
