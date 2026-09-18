@@ -502,21 +502,23 @@ export class DashboardComponent implements OnInit {
   loadDashboardData(): void {
     this.isLoading = true;
     this.transactionService.getTransactions().pipe(
-      timeout(3000),
-      catchError(() => {
-        console.log('Backend timeout, using mock data');
+      timeout(5000),
+      catchError((error) => {
+        console.warn('Error loading transactions:', error);
         return of([]);
       })
     ).subscribe({
       next: (transactions) => {
-        if (transactions.length > 0) {
+        if (transactions && transactions.length > 0) {
           this.processDashboardData(transactions);
         } else {
+          console.log('No transactions or empty response, using mock data');
           this.dashboardData = this.mockDataService.getDashboardData();
         }
         this.isLoading = false;
       },
-      error: () => {
+      error: (error) => {
+        console.error('Dashboard error:', error);
         this.dashboardData = this.mockDataService.getDashboardData();
         this.isLoading = false;
       }

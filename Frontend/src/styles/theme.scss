@@ -122,3 +122,50 @@ html, body {
     border-color: var(--color-primary) !important;
   }
 }
+
+// ============================================================================
+// MATERIAL SELECT PANEL STYLES
+// ============================================================================
+
+::ng-deep .mat-mdc-select-panel {
+  background-color: var(--color-bg-card) !important;
+
+  .mat-mdc-optgroup-label,
+  .mat-mdc-option {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+
+  .mat-mdc-option {
+    padding: 12px 16px !important;
+    color: var(--color-text-primary) !important;
+    background-color: var(--color-bg-card) !important;
+
+    &:hover {
+      background-color: rgba(167, 139, 250, 0.1) !important;
+    }
+
+    &.mat-mdc-option-active {
+      background-color: rgba(167, 139, 250, 0.2) !important;
+      color: var(--color-primary) !important;
+    }
+
+    &[disabled] {
+      opacity: 0.5;
+    }
+  }
+
+  .mdc-list-item__primary-text {
+    color: var(--color-text-primary) !important;
+  }
+}
+
+::ng-deep .mat-mdc-select-content {
+  .mat-mdc-optgroup {
+    .mat-mdc-optgroup-label {
+      padding: 16px !important;
+      color: var(--color-text-secondary) !important;
+      font-weight: 600 !important;
+    }
+  }
+}
