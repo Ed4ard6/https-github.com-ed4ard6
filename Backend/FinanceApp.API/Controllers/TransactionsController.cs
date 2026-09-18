@@ -20,7 +20,10 @@ public class TransactionsController : ControllerBase
         _context = context;
     }
 
-    private string GetUserId() => User.FindFirst("sub")?.Value ?? string.Empty;
+    private string GetUserId() =>
+        User.FindFirst("sub")?.Value
+        ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+        ?? string.Empty;
 
     [HttpGet]
     public IActionResult GetTransactions()

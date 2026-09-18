@@ -2,7 +2,12 @@ using FinanceApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+
+// Sin esto, .NET renombra el claim "sub" a ClaimTypes.NameIdentifier
+// y User.FindFirst("sub") devuelve null en los controllers.
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 

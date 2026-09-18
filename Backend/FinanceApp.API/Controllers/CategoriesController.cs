@@ -4,6 +4,7 @@ using FinanceApp.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FinanceApp.API.Controllers;
 
@@ -19,7 +20,10 @@ public class CategoriesController : ControllerBase
         _context = context;
     }
 
-    private string GetUserId() => User.FindFirst("sub")?.Value ?? string.Empty;
+    private string GetUserId() =>
+        User.FindFirst("sub")?.Value
+        ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+        ?? string.Empty;
 
     [HttpGet]
     public IActionResult GetCategories()
