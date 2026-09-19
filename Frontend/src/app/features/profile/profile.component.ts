@@ -189,8 +189,8 @@ export class ProfileComponent implements OnInit {
 
     this.savingProfile.set(true);
     this.userService.updateProfile({
-      nombre: this.profileForm.value.nombre!,
-      email: this.profileForm.value.email!
+      nombre: this.profileForm.value.nombre!.trim(),
+      email: this.profileForm.value.email!.trim().toLowerCase()
     }).subscribe({
       next: (user) => {
         this.authService.updateStoredUser(user);

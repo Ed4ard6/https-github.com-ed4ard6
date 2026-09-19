@@ -41,7 +41,7 @@ public class UsersController : ControllerBase
             return NotFound(new { message = "Usuario no encontrado" });
 
         var nombre = request.Nombre?.Trim() ?? string.Empty;
-        var email = request.Email?.Trim() ?? string.Empty;
+        var email = AuthController.NormalizeEmail(request.Email);
 
         if (string.IsNullOrWhiteSpace(nombre))
             return BadRequest(new { message = "El nombre es obligatorio" });

@@ -16,6 +16,8 @@ public class DataSeeder
 
     public static void SeedData(FinanceDbContext context)
     {
+        NormalizeExistingEmails(context);
+
         var isFirstRun = !context.Users.Any();
 
         if (isFirstRun)
@@ -43,6 +45,24 @@ public class DataSeeder
         {
             SeedCategoriesForUser(context, userId);
         }
+    }
+
+    // El login busca por email normalizado; las cuentas creadas antes de
+    // esa regla quedarían fuera si conservan mayúsculas o espacios.
+    private static void NormalizeExistingEmails(FinanceDbContext context)
+    {
+        var changed = false;
+
+        foreach (var user in context.Users.ToList())
+        {
+            var normalized = user.Email.Trim().ToLowerInvariant();
+            if (user.Email == normalized) continue;
+
+            user.Email = normalized;
+            changed = true;
+        }
+
+        if (changed) context.SaveChanges();
     }
 
     public static void SeedCategoriesForUser(FinanceDbContext context, string userId)

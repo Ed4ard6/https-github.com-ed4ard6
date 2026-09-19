@@ -209,7 +209,7 @@ export class TransactionFormComponent implements OnInit {
     const payload = {
       categoryId: value.categoryId || '',
       amount: parseFloat(value.amount?.toString() || '0'),
-      description: value.description || '',
+      description: value.description?.trim() || '',
       date: new Date(value.date || new Date()),
       kind: value.kind as any
     };

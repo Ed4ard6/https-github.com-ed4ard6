@@ -12,14 +12,16 @@ export class AuthService {
   private http = inject(HttpClient);
   private apiUrl = 'http://localhost:5211/api';
 
+  // Deben declararse antes que los subjects: los inicializadores corren en
+  // orden y hasToken()/getStoredUser() los leerían como undefined.
+  private readonly TOKEN_KEY = 'auth_token';
+  private readonly USER_KEY = 'auth_user';
+
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasToken());
   private userSubject = new BehaviorSubject<User | null>(this.getStoredUser());
 
   isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
   user$ = this.userSubject.asObservable();
-
-  private readonly TOKEN_KEY = 'auth_token';
-  private readonly USER_KEY = 'auth_user';
 
   constructor() {}
 

@@ -1,4 +1,5 @@
 import { Component, inject, Output, EventEmitter } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -30,15 +31,15 @@ import { AuthService } from '../../core/services/auth.service';
       <span class="spacer"></span>
 
       <button type="button" [matMenuTriggerFor]="userMenu" class="user-trigger">
-        <span class="avatar">{{ initial(user?.nombre) }}</span>
-        <span class="user-name">{{ user?.nombre }}</span>
+        <span class="avatar">{{ initial(user()?.nombre) }}</span>
+        <span class="user-name">{{ user()?.nombre }}</span>
         <mat-icon class="chevron">expand_more</mat-icon>
       </button>
 
       <mat-menu #userMenu="matMenu" class="user-menu">
         <div class="menu-header">
-          <span class="menu-name">{{ user?.nombre }}</span>
-          <span class="menu-email">{{ user?.email }}</span>
+          <span class="menu-name">{{ user()?.nombre }}</span>
+          <span class="menu-email">{{ user()?.email }}</span>
         </div>
 
         <mat-divider></mat-divider>
@@ -160,9 +161,9 @@ export class HeaderComponent {
 
   @Output() logoutClick = new EventEmitter<void>();
 
-  get user() {
-    return this.authService.getCurrentUser();
-  }
+  // signal, no un getter: en zoneless un getter no se reevalúa cuando
+  // el usuario cambia tras el login.
+  user = toSignal(this.authService.user$);
 
   initial(nombre?: string | null): string {
     return nombre?.trim().charAt(0).toUpperCase() ?? '?';

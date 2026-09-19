@@ -26,7 +26,10 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
-        var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
+        // El email se guarda normalizado, así que "Demo@Example.com" y
+        // "demo@example.com " entran igual.
+        var email = NormalizeEmail(request.Email);
+        var user = _context.Users.FirstOrDefault(u => u.Email == email);
 
         // Mismo mensaje en ambos casos: no revelar qué emails existen.
         if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
@@ -49,23 +52,26 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public IActionResult Register([FromBody] RegisterRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Nombre))
+        var nombre = request.Nombre?.Trim() ?? string.Empty;
+        var email = NormalizeEmail(request.Email);
+
+        if (string.IsNullOrWhiteSpace(nombre))
             return BadRequest(new { message = "El nombre es obligatorio" });
 
-        if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains('@'))
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
             return BadRequest(new { message = "El email no es válido" });
 
         if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 6)
             return BadRequest(new { message = "La contraseña debe tener al menos 6 caracteres" });
 
-        if (_context.Users.Any(u => u.Email == request.Email))
+        if (_context.Users.Any(u => u.Email == email))
             return BadRequest(new { message = "El email ya está registrado" });
 
         var user = new User
         {
             Id = Guid.NewGuid().ToString(),
-            Nombre = request.Nombre,
-            Email = request.Email,
+            Nombre = nombre,
+            Email = email,
             PasswordHash = HashPassword(request.Password),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -113,6 +119,9 @@ public class AuthController : ControllerBase
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    public static string NormalizeEmail(string? email) =>
+        email?.Trim().ToLowerInvariant() ?? string.Empty;
 
     private string HashPassword(string password)
     {

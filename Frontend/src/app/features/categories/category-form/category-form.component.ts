@@ -154,7 +154,7 @@ export class CategoryFormComponent implements OnInit {
 
     this.isLoading = true;
     const payload = {
-      nombre: this.form.value.nombre!,
+      nombre: this.form.value.nombre!.trim(),
       kind: this.form.value.kind as any,
       color: this.form.value.color ?? '#a78bfa',
       activo: true

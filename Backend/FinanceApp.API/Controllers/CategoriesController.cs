@@ -47,12 +47,15 @@ public class CategoriesController : ControllerBase
         if (!Enum.TryParse<CategoryKind>(request.Kind, true, out var kind))
             return BadRequest(new { message = $"Tipo de categoría inválido: '{request.Kind}'" });
 
+        if (string.IsNullOrWhiteSpace(request.Nombre))
+            return BadRequest(new { message = "El nombre es obligatorio" });
+
         var now = DateTime.UtcNow;
         var category = new Category
         {
             Id = Guid.NewGuid().ToString(),
             UserId = userId,
-            Nombre = request.Nombre,
+            Nombre = request.Nombre.Trim(),
             Kind = kind,
             Color = request.Color,
             Activo = request.Activo,

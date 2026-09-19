@@ -61,7 +61,7 @@ public class TransactionsController : ControllerBase
                 UserId = userId,
                 CategoryId = request.CategoryId,
                 Amount = request.Amount,
-                Description = request.Description,
+                Description = request.Description?.Trim() ?? string.Empty,
                 Date = request.Date,
                 Kind = kind,
                 CreatedAt = DateTime.UtcNow,
@@ -115,7 +115,7 @@ public class TransactionsController : ControllerBase
 
         transaction.CategoryId = request.CategoryId;
         transaction.Amount = request.Amount;
-        transaction.Description = request.Description;
+        transaction.Description = request.Description?.Trim() ?? string.Empty;
         transaction.Date = request.Date;
         transaction.Kind = kind;
         transaction.UpdatedAt = DateTime.UtcNow;
