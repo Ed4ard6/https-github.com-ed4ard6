@@ -88,6 +88,14 @@ export class AuthService {
   }
 
   /**
+   * Refresca el usuario en memoria y en localStorage tras editar el perfil
+   */
+  updateStoredUser(user: User): void {
+    this.storeUser(user);
+    this.userSubject.next(user);
+  }
+
+  /**
    * Verifica si el usuario está autenticado
    */
   isAuthenticated(): boolean {
