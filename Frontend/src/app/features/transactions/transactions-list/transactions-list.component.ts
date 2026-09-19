@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,7 +34,7 @@ import { Transaction } from '../../../core/models/domain.models';
       </div>
 
       <mat-card>
-        <table mat-table [dataSource]="transactions" class="transactions-table">
+        <table mat-table [dataSource]="transactions()" class="transactions-table">
           <ng-container matColumnDef="date">
             <th mat-header-cell *matHeaderCellDef>Fecha</th>
             <td mat-cell *matCellDef="let element">{{ formatDate(element.date) }}</td>
@@ -44,7 +44,7 @@ import { Transaction } from '../../../core/models/domain.models';
             <th mat-header-cell *matHeaderCellDef>Categoría</th>
             <td mat-cell *matCellDef="let element">
               <span class="category-badge" [style.background-color]="element.category?.color + '20'">
-                {{ element.category?.nombre }}
+                {{ element.categoryName || element.category?.nombre }}
               </span>
             </td>
           </ng-container>
@@ -105,25 +105,21 @@ export class TransactionsListComponent implements OnInit {
   private mockDataService = inject(MockDataService);
   private router = inject(Router);
 
-  transactions: Transaction[] = [];
+  // signal, no un array plano: la app es zoneless y un subscribe()
+  // no dispara el re-render por sí solo.
+  transactions = signal<Transaction[]>([]);
   displayedColumns = ['date', 'category', 'description', 'amount', 'actions'];
-  isLoading = true;
 
   ngOnInit() {
     this.loadTransactions();
   }
 
   loadTransactions() {
-    this.isLoading = true;
     this.transactionService.getTransactions().subscribe({
-      next: (data) => {
-        this.transactions = data;
-        this.isLoading = false;
-      },
+      next: (data) => this.transactions.set(data ?? []),
       error: (error) => {
-        console.warn('Error loading transactions from API, using mock data:', error);
-        this.transactions = this.mockDataService.getTransactions();
-        this.isLoading = false;
+        console.warn('Error cargando transacciones, usando mock:', error);
+        this.transactions.set(this.mockDataService.getTransactions());
       }
     });
   }
@@ -143,7 +139,7 @@ export class TransactionsListComponent implements OnInit {
   deleteTransaction(id: string) {
     this.transactionService.deleteTransaction(id).subscribe({
       next: () => {
-        this.transactions = this.transactions.filter(t => t.id !== id);
+        this.transactions.update(list => list.filter(t => t.id !== id));
       },
       error: (error) => {
         console.error('Error deleting transaction:', error);

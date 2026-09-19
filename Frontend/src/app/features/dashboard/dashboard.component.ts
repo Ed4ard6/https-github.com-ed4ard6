@@ -155,7 +155,7 @@ import { of } from 'rxjs';
                   <mat-icon>{{ getTransactionIcon(transaction.kind) }}</mat-icon>
                 </div>
                 <div class="transaction-info">
-                  <span class="transaction-category">{{ transaction.category?.nombre }}</span>
+                  <span class="transaction-category">{{ transaction.categoryName || transaction.category?.nombre }}</span>
                   <span class="transaction-description">{{ transaction.description }}</span>
                 </div>
               </div>
@@ -549,13 +549,15 @@ export class DashboardComponent implements OnInit {
       .filter(t => t.kind === 'expense')
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
+    // La API manda categoryName plano; los mocks traen el objeto category.
     const categoryMap = new Map<string, { amount: number; category: any }>();
     transactions
-      .filter(t => t.kind === 'expense' && t.category)
+      .filter(t => t.kind === 'expense')
       .forEach(t => {
-        const key = t.category!.id;
+        const key = t.categoryId;
         if (!categoryMap.has(key)) {
-          categoryMap.set(key, { amount: 0, category: t.category });
+          const category = t.category ?? { id: key, nombre: t.categoryName ?? 'Sin categoría' };
+          categoryMap.set(key, { amount: 0, category });
         }
         categoryMap.get(key)!.amount += Math.abs(t.amount);
       });

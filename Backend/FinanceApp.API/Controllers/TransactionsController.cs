@@ -43,7 +43,7 @@ public class TransactionsController : ControllerBase
             Amount = t.Amount,
             Description = t.Description,
             Date = t.Date,
-            Kind = t.Kind.ToString()
+            Kind = t.Kind.ToString().ToLowerInvariant()
         }));
     }
 
@@ -89,7 +89,7 @@ public class TransactionsController : ControllerBase
                 Amount = transaction.Amount,
                 Description = transaction.Description,
                 Date = transaction.Date,
-                Kind = transaction.Kind.ToString()
+                Kind = transaction.Kind.ToString().ToLowerInvariant()
             });
         }
         catch (Exception ex)

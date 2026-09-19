@@ -37,7 +37,7 @@ public class CategoriesController : ControllerBase
         {
             Id = c.Id,
             Nombre = c.Nombre,
-            Kind = c.Kind.ToString(),
+            Kind = c.Kind.ToString().ToLowerInvariant(),
             Color = c.Color,
             Activo = c.Activo
         }));
@@ -74,7 +74,7 @@ public class CategoriesController : ControllerBase
         {
             Id = category.Id,
             Nombre = category.Nombre,
-            Kind = category.Kind.ToString(),
+            Kind = category.Kind.ToString().ToLowerInvariant(),
             Color = category.Color,
             Activo = category.Activo
         });

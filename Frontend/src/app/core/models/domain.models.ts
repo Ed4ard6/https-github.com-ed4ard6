@@ -52,7 +52,8 @@ export interface Transaction {
   id: string;
   userId: string;
   categoryId: string;
-  category?: Category;    // Relación cargada
+  category?: Category;    // Relación cargada (solo en datos mock)
+  categoryName?: string;  // Lo que devuelve la API
   amount: number;         // Positivo para ingresos, negativo para gastos
   description: string;
   date: Date;
