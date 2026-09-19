@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -62,10 +62,31 @@ import {
                 <mat-icon>savings</mat-icon>
                 <span>Ahorros</span>
               </a>
-              <a class="nav-item" [routerLink]="['/reports']" routerLinkActive="active">
-                <mat-icon>analytics</mat-icon>
-                <span>Reportes</span>
-              </a>
+              <div class="nav-group">
+                <button
+                  type="button"
+                  class="nav-item nav-toggle"
+                  [class.active]="isReportsRoute()"
+                  (click)="reportsOpen.set(!reportsOpen())"
+                  [attr.aria-expanded]="reportsOpen()"
+                >
+                  <mat-icon>analytics</mat-icon>
+                  <span>Reportes</span>
+                  <mat-icon class="chevron" [class.open]="reportsOpen()">expand_more</mat-icon>
+                </button>
+
+                <div class="submenu" [class.open]="reportsOpen()">
+                  <a
+                    *ngFor="let report of reports"
+                    class="nav-subitem"
+                    [routerLink]="[report.path]"
+                    routerLinkActive="active"
+                  >
+                    <mat-icon>{{ report.icon }}</mat-icon>
+                    <span>{{ report.label }}</span>
+                  </a>
+                </div>
+              </div>
             </nav>
 
             <div class="sidebar-footer">
@@ -180,6 +201,81 @@ import {
       border-top: 1px solid var(--color-border);
     }
 
+    .nav-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-toggle {
+      width: 100%;
+      background: transparent;
+      border: 1px solid transparent;
+      border-left: 3px solid transparent;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+
+      .chevron {
+        margin-left: auto;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        transition: transform var(--transition-base);
+      }
+
+      .chevron.open {
+        transform: rotate(180deg);
+      }
+    }
+
+    // Se despliega con max-height para que la transición funcione
+    // sin fijar una altura concreta.
+    .submenu {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height var(--transition-base), opacity var(--transition-base),
+        margin var(--transition-base);
+    }
+
+    .submenu.open {
+      max-height: 320px;
+      opacity: 1;
+      margin: var(--spacing-xs) 0;
+    }
+
+    .nav-subitem {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: 10px 16px 10px 44px;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      transition: all 0.2s ease;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
+      &:hover {
+        background-color: rgba(124, 58, 237, 0.1);
+        color: var(--color-text-primary);
+      }
+
+      &.active {
+        color: var(--color-primary);
+        background-color: rgba(124, 58, 237, 0.15);
+        font-weight: 600;
+      }
+    }
+
     .logout-item {
       width: 100%;
       background: transparent;
@@ -253,6 +349,18 @@ export class AppLayoutComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
+
+  reports = [
+    { path: '/reports/monthly', label: 'Mensual', icon: 'bar_chart' },
+    { path: '/reports/waterfall', label: 'Flujo de caja', icon: 'waterfall_chart' },
+    { path: '/reports/calendar', label: 'Calendario', icon: 'calendar_month' },
+    { path: '/reports/categories', label: 'Por categoría', icon: 'donut_large' }
+  ];
+
+  // Abierto de entrada si ya estás dentro de un reporte.
+  reportsOpen = signal(this.router.url.startsWith('/reports'));
+
+  isReportsRoute = computed(() => this.reportsOpen() || this.router.url.startsWith('/reports'));
 
   confirmLogout(): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {

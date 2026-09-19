@@ -133,41 +133,30 @@ export const routes: Routes = [
       },
       {
         path: 'reports',
+        redirectTo: 'reports/monthly',
+        pathMatch: 'full'
+      },
+      {
+        path: 'reports/monthly',
         loadComponent: () =>
-          import('./features/reports/reports-layout.component').then(m => m.ReportsLayoutComponent),
-        children: [
-          {
-            path: 'monthly',
-            loadComponent: () =>
-              import('./features/reports/monthly/monthly.component').then(m => m.MonthlyComponent)
-          },
-          {
-            path: 'waterfall',
-            loadComponent: () =>
-              import('./features/reports/waterfall/waterfall.component').then(
-                m => m.WaterfallComponent
-              )
-          },
-          {
-            path: 'calendar',
-            loadComponent: () =>
-              import('./features/reports/calendar/calendar.component').then(
-                m => m.CalendarComponent
-              )
-          },
-          {
-            path: 'categories',
-            loadComponent: () =>
-              import('./features/reports/categories-report/categories-report.component').then(
-                m => m.CategoriesReportComponent
-              )
-          },
-          {
-            path: '',
-            redirectTo: 'monthly',
-            pathMatch: 'full'
-          }
-        ]
+          import('./features/reports/monthly/monthly.component').then(m => m.MonthlyComponent)
+      },
+      {
+        path: 'reports/waterfall',
+        loadComponent: () =>
+          import('./features/reports/waterfall/waterfall.component').then(m => m.WaterfallComponent)
+      },
+      {
+        path: 'reports/calendar',
+        loadComponent: () =>
+          import('./features/reports/calendar/calendar.component').then(m => m.CalendarComponent)
+      },
+      {
+        path: 'reports/categories',
+        loadComponent: () =>
+          import('./features/reports/categories-report/categories-report.component').then(
+            m => m.CategoriesReportComponent
+          )
       }
     ]
   },
