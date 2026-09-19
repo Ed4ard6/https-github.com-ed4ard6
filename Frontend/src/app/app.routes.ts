@@ -133,7 +133,14 @@ export const routes: Routes = [
       },
       {
         path: 'reports',
+        loadComponent: () =>
+          import('./features/reports/reports-layout.component').then(m => m.ReportsLayoutComponent),
         children: [
+          {
+            path: 'monthly',
+            loadComponent: () =>
+              import('./features/reports/monthly/monthly.component').then(m => m.MonthlyComponent)
+          },
           {
             path: 'waterfall',
             loadComponent: () =>
@@ -149,18 +156,15 @@ export const routes: Routes = [
               )
           },
           {
-            path: 'monthly',
+            path: 'categories',
             loadComponent: () =>
-              import('./features/reports/monthly/monthly.component').then(m => m.MonthlyComponent)
-          },
-          {
-            path: 'planner',
-            loadComponent: () =>
-              import('./features/reports/planner/planner.component').then(m => m.PlannerComponent)
+              import('./features/reports/categories-report/categories-report.component').then(
+                m => m.CategoriesReportComponent
+              )
           },
           {
             path: '',
-            redirectTo: 'waterfall',
+            redirectTo: 'monthly',
             pathMatch: 'full'
           }
         ]

@@ -157,7 +157,12 @@ export class TransactionFormComponent implements OnInit {
 
     if (this.transactionId) {
       this.loadTransaction(this.transactionId);
+      return;
     }
+
+    // Ahorros enlaza aquí con ?kind=saving para no obligar a elegirlo a mano.
+    const kind = this.route.snapshot.queryParamMap.get('kind');
+    if (kind) this.form.patchValue({ kind });
   }
 
   private loadTransaction(id: string) {
