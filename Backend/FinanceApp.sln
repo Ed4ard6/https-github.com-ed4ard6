@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinanceApp.Infrastructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinanceApp.API", "FinanceApp.API\FinanceApp.API.csproj", "{43EEF2D6-E7FC-4235-A71E-B42630D49351}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinanceApp.Tests", "FinanceApp.Tests\FinanceApp.Tests.csproj", "{87E6B247-C2CC-4D6D-BCBA-31C001D1DD5E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{43EEF2D6-E7FC-4235-A71E-B42630D49351}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43EEF2D6-E7FC-4235-A71E-B42630D49351}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43EEF2D6-E7FC-4235-A71E-B42630D49351}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87E6B247-C2CC-4D6D-BCBA-31C001D1DD5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87E6B247-C2CC-4D6D-BCBA-31C001D1DD5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87E6B247-C2CC-4D6D-BCBA-31C001D1DD5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87E6B247-C2CC-4D6D-BCBA-31C001D1DD5E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
