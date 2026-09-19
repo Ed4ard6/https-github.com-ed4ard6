@@ -138,7 +138,7 @@ table {
   }
 }
 
-::ng-deep {
+body {
   .mat-mdc-table {
     background-color: var(--color-bg-card) !important;
 
@@ -171,7 +171,7 @@ table {
 // MATERIAL FORM FIELD STYLES
 // ============================================================================
 
-::ng-deep .mat-mdc-form-field {
+.mat-mdc-form-field {
   width: 100%;
 
   // Esquinas redondeadas: por defecto la caja es completamente cuadrada.
@@ -212,7 +212,7 @@ table {
   }
 }
 
-::ng-deep .mdc-text-field {
+.mdc-text-field {
   background-color: var(--color-bg-input) !important;
 
   .mdc-text-field__input {
@@ -223,7 +223,7 @@ table {
   }
 }
 
-::ng-deep .mat-mdc-select {
+.mat-mdc-select {
   width: 100%;
 
   .mat-mdc-select-trigger {
@@ -231,15 +231,27 @@ table {
   }
 }
 
-::ng-deep .mdc-notched-outline {
-  .mdc-notched-outline__leading,
-  .mdc-notched-outline__notch,
-  .mdc-notched-outline__trailing {
-    border-color: var(--color-border) !important;
-  }
+// Sin ::ng-deep: esta hoja es global y ahí ese selector no aplica.
+// El outline se dibuja en tres piezas y el radio va en los extremos
+// (--mdc-outlined-text-field-container-shape es de Material 3; este tema es M2).
+.mdc-notched-outline__leading,
+.mdc-notched-outline__notch,
+.mdc-notched-outline__trailing {
+  border-color: var(--color-border) !important;
 }
 
-::ng-deep .mat-mdc-form-field-focused {
+.mdc-notched-outline__leading {
+  border-top-left-radius: 12px !important;
+  border-bottom-left-radius: 12px !important;
+  width: 14px !important;
+}
+
+.mdc-notched-outline__trailing {
+  border-top-right-radius: 12px !important;
+  border-bottom-right-radius: 12px !important;
+}
+
+.mat-mdc-form-field-focused {
   .mdc-notched-outline .mdc-notched-outline__leading,
   .mdc-notched-outline .mdc-notched-outline__notch,
   .mdc-notched-outline .mdc-notched-outline__trailing {
@@ -251,7 +263,7 @@ table {
 // BOTONES
 // ============================================================================
 
-::ng-deep {
+body {
   .mat-mdc-raised-button,
   .mat-mdc-unelevated-button,
   .mat-mdc-button,
@@ -392,11 +404,11 @@ table {
   }
 }
 
-::ng-deep .mat-mdc-select-panel {
+.mat-mdc-select-panel {
   background-color: var(--color-bg-card) !important;
 }
 
-::ng-deep .mat-mdc-select-content {
+.mat-mdc-select-content {
   .mat-mdc-optgroup {
     .mat-mdc-optgroup-label {
       padding: 16px !important;
