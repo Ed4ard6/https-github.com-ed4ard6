@@ -24,11 +24,19 @@ public class DebtsController : ControllerBase
         ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
         ?? string.Empty;
 
+    // EF no sabe traducir GetUserId() a SQL, así que se resuelve antes de consultar.
+    private Debt? FindDebt(string id)
+    {
+        var userId = GetUserId();
+        return _context.Debts.FirstOrDefault(d => d.Id == id && d.UserId == userId);
+    }
+
     [HttpGet]
     public IActionResult GetDebts()
     {
+        var userId = GetUserId();
         var debts = _context.Debts
-            .Where(d => d.UserId == GetUserId() && d.Activo)
+            .Where(d => d.UserId == userId && d.Activo)
             .OrderByDescending(d => d.Balance)
             .ToList();
 
@@ -38,7 +46,7 @@ public class DebtsController : ControllerBase
     [HttpGet("{id}")]
     public IActionResult GetDebt(string id)
     {
-        var debt = _context.Debts.FirstOrDefault(d => d.Id == id && d.UserId == GetUserId());
+        var debt = FindDebt(id);
 
         if (debt == null)
             return NotFound(new { message = "Deuda no encontrada" });
@@ -83,7 +91,7 @@ public class DebtsController : ControllerBase
     [HttpPut("{id}")]
     public IActionResult UpdateDebt(string id, [FromBody] SaveDebtRequest request)
     {
-        var debt = _context.Debts.FirstOrDefault(d => d.Id == id && d.UserId == GetUserId());
+        var debt = FindDebt(id);
 
         if (debt == null)
             return NotFound(new { message = "Deuda no encontrada" });
@@ -107,7 +115,7 @@ public class DebtsController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult DeleteDebt(string id)
     {
-        var debt = _context.Debts.FirstOrDefault(d => d.Id == id && d.UserId == GetUserId());
+        var debt = FindDebt(id);
 
         if (debt == null)
             return NotFound(new { message = "Deuda no encontrada" });

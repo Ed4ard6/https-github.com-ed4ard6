@@ -72,7 +72,8 @@ public class CategoriesController : ControllerBase
     [HttpGet("{id}")]
     public IActionResult GetCategory(string id)
     {
-        var category = _context.Categories.FirstOrDefault(c => c.Id == id && c.UserId == GetUserId());
+        var userId = GetUserId();
+        var category = _context.Categories.FirstOrDefault(c => c.Id == id && c.UserId == userId);
 
         if (category == null)
             return NotFound(new { message = "Categoría no encontrada" });

@@ -84,9 +84,10 @@ public class TransactionsController : ControllerBase
     [HttpGet("{id}")]
     public IActionResult GetTransaction(string id)
     {
+        var userId = GetUserId();
         var transaction = _context.Transactions
             .Include(t => t.Category)
-            .FirstOrDefault(t => t.Id == id && t.UserId == GetUserId());
+            .FirstOrDefault(t => t.Id == id && t.UserId == userId);
 
         if (transaction == null)
             return NotFound(new { message = "Transacción no encontrada" });

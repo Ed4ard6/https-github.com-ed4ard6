@@ -23,10 +23,17 @@ public class UsersController : ControllerBase
         ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
         ?? string.Empty;
 
+    // EF no sabe traducir GetUserId() a SQL, así que se resuelve antes de consultar.
+    private Domain.Entities.User? FindCurrentUser()
+    {
+        var userId = GetUserId();
+        return _context.Users.FirstOrDefault(u => u.Id == userId);
+    }
+
     [HttpGet("me")]
     public IActionResult GetProfile()
     {
-        var user = _context.Users.FirstOrDefault(u => u.Id == GetUserId());
+        var user = FindCurrentUser();
         if (user == null)
             return NotFound(new { message = "Usuario no encontrado" });
 
@@ -36,7 +43,7 @@ public class UsersController : ControllerBase
     [HttpPut("me")]
     public IActionResult UpdateProfile([FromBody] UpdateProfileRequest request)
     {
-        var user = _context.Users.FirstOrDefault(u => u.Id == GetUserId());
+        var user = FindCurrentUser();
         if (user == null)
             return NotFound(new { message = "Usuario no encontrado" });
 
@@ -63,7 +70,7 @@ public class UsersController : ControllerBase
     [HttpPut("me/password")]
     public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
     {
-        var user = _context.Users.FirstOrDefault(u => u.Id == GetUserId());
+        var user = FindCurrentUser();
         if (user == null)
             return NotFound(new { message = "Usuario no encontrado" });
 
