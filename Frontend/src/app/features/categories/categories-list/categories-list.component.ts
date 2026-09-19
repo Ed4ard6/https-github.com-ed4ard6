@@ -11,6 +11,7 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData
 } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { KindLabelPipe } from '../../../shared/pipes/kind-label.pipe';
 import { MockDataService } from '../../../core/services/mock-data.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Category } from '../../../core/models/domain.models';
@@ -20,7 +21,15 @@ import { of } from 'rxjs';
 @Component({
   selector: 'app-categories-list',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatButtonModule, MatIconModule, MatCardModule, MatSnackBarModule],
+  imports: [
+    CommonModule,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatCardModule,
+    MatSnackBarModule,
+    KindLabelPipe
+  ],
   template: `
     <div class="categories-container">
       <div class="header">
@@ -47,7 +56,7 @@ import { of } from 'rxjs';
 
           <ng-container matColumnDef="kind">
             <th mat-header-cell *matHeaderCellDef>Tipo</th>
-            <td mat-cell *matCellDef="let element">{{ element.kind }}</td>
+            <td mat-cell *matCellDef="let element">{{ element.kind | kindLabel }}</td>
           </ng-container>
 
           <ng-container matColumnDef="status">

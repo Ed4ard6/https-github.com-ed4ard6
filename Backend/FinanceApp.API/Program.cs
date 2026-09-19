@@ -68,10 +68,11 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Seeding de datos (solo en desarrollo)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<FinanceDbContext>();
+    // Sin esto, una tabla nueva no llega a una base de datos ya creada.
+    db.Database.Migrate();
     FinanceApp.API.Data.DataSeeder.SeedData(db);
 }
 

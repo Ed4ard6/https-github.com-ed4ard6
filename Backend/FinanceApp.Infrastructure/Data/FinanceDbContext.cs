@@ -17,6 +17,7 @@ public class FinanceDbContext : DbContext
     public DbSet<Category> Categories { get; set; } = null!;
     public DbSet<Transaction> Transactions { get; set; } = null!;
     public DbSet<Salary> Salaries { get; set; } = null!;
+    public DbSet<Debt> Debts { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +60,15 @@ public class FinanceDbContext : DbContext
             .HasOne(s => s.User)
             .WithMany(u => u.Salaries)
             .HasForeignKey(s => s.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configuración de Debt
+        modelBuilder.Entity<Debt>()
+            .HasKey(d => d.Id);
+        modelBuilder.Entity<Debt>()
+            .HasOne(d => d.User)
+            .WithMany(u => u.Debts)
+            .HasForeignKey(d => d.UserId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

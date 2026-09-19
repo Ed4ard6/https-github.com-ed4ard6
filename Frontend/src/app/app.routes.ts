@@ -118,6 +118,16 @@ export const routes: Routes = [
               import('./features/debts/debt-comparison/debt-comparison.component').then(
                 m => m.DebtComparisonComponent
               )
+          },
+          {
+            path: 'create',
+            loadComponent: () =>
+              import('./features/debts/debt-form/debt-form.component').then(m => m.DebtFormComponent)
+          },
+          {
+            path: 'edit/:id',
+            loadComponent: () =>
+              import('./features/debts/debt-form/debt-form.component').then(m => m.DebtFormComponent)
           }
         ]
       },
