@@ -28,25 +28,9 @@ public class AuthController : ControllerBase
     {
         var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
 
-        if (user == null)
-        {
-            user = new User
-            {
-                Id = Guid.NewGuid().ToString(),
-                Email = request.Email,
-                Nombre = request.Email.Split('@')[0],
-                PasswordHash = HashPassword(request.Password),
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-            _context.Users.Add(user);
-            _context.SaveChanges();
-            DataSeeder.SeedCategoriesForUser(_context, user.Id);
-        }
-        else if (!VerifyPassword(request.Password, user.PasswordHash))
-        {
-            return Unauthorized(new { message = "Contraseña incorrecta" });
-        }
+        // Mismo mensaje en ambos casos: no revelar qué emails existen.
+        if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
+            return Unauthorized(new { message = "Email o contraseña incorrectos" });
 
         var token = GenerateToken(user);
         return Ok(new AuthResponse
@@ -65,7 +49,15 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public IActionResult Register([FromBody] RegisterRequest request)
     {
-        // Validar que el email no exista
+        if (string.IsNullOrWhiteSpace(request.Nombre))
+            return BadRequest(new { message = "El nombre es obligatorio" });
+
+        if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains('@'))
+            return BadRequest(new { message = "El email no es válido" });
+
+        if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 6)
+            return BadRequest(new { message = "La contraseña debe tener al menos 6 caracteres" });
+
         if (_context.Users.Any(u => u.Email == request.Email))
             return BadRequest(new { message = "El email ya está registrado" });
 
@@ -99,7 +91,9 @@ public class AuthController : ControllerBase
 
     private string GenerateToken(User user)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "super-secret-key"));
+        // Mismo fallback que Program.cs; en producción la clave es obligatoria y se valida al arrancar.
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+            _configuration["Jwt:Key"] ?? "dev-only-local-signing-key-do-not-use-in-production"));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]

@@ -8,15 +8,22 @@ namespace FinanceApp.API.Controllers;
 public class DebugController : ControllerBase
 {
     private readonly FinanceDbContext _context;
+    private readonly IWebHostEnvironment _env;
 
-    public DebugController(FinanceDbContext context)
+    public DebugController(FinanceDbContext context, IWebHostEnvironment env)
     {
         _context = context;
+        _env = env;
     }
+
+    // Expone datos de todos los usuarios: fuera de desarrollo no debe existir.
+    private bool IsAvailable => _env.IsDevelopment();
 
     [HttpGet("users")]
     public IActionResult GetUsers()
     {
+        if (!IsAvailable) return NotFound();
+
         var users = _context.Users.Select(u => new
         {
             u.Id,
@@ -31,6 +38,8 @@ public class DebugController : ControllerBase
     [HttpGet("categories")]
     public IActionResult GetCategories()
     {
+        if (!IsAvailable) return NotFound();
+
         var categories = _context.Categories.Select(c => new
         {
             c.Id,

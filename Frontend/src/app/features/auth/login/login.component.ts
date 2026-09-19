@@ -87,7 +87,7 @@ import { AuthService } from '../../../core/services/auth.service';
           <!-- Demo Credentials -->
           <div class="demo-credentials">
             <small>
-              <strong>Demo:</strong> Email: cualquiera@ejemplo.com | Contraseña: cualquiera
+              <strong>Demo:</strong> demo&#64;example.com | Contraseña: demo123
             </small>
           </div>
         </mat-card-content>

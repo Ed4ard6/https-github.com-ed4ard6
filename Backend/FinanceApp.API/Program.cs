@@ -22,7 +22,16 @@ builder.Services.AddDbContext<FinanceDbContext>(options =>
 );
 
 // JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "super-secret-key";
+// Fuera de desarrollo la clave llega por variable de entorno (Jwt__Key).
+// Arrancar con una clave por defecto permitiría a cualquiera forjar tokens.
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (!builder.Environment.IsDevelopment() && (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32))
+{
+    throw new InvalidOperationException(
+        "Falta Jwt:Key o es demasiado corta. Define la variable de entorno Jwt__Key con al menos 32 caracteres.");
+}
+jwtKey ??= "dev-only-local-signing-key-do-not-use-in-production";
+
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "finance-app";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "finance-app";
 
