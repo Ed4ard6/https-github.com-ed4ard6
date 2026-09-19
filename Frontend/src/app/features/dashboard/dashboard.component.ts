@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatGridListModule } from '@angular/material/grid-list';
@@ -10,10 +10,16 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRippleModule } from '@angular/material/core';
 import { Router, RouterLink } from '@angular/router';
 import { TransactionService } from '../../core/services/transaction.service';
-import { MockDataService } from '../../core/services/mock-data.service';
-import { DashboardData, Transaction, CategoryKind } from '../../core/models/domain.models';
-import { timeout, catchError, finalize } from 'rxjs/operators';
+import { DashboardData, Transaction } from '../../core/models/domain.models';
+import { timeout, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+
+/** Suma en positivo los importes de un tipo concreto. */
+function sumBy(transactions: Transaction[], kind: string): number {
+  return transactions
+    .filter(t => t.kind === kind)
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+}
 
 /**
  * DashboardComponent
@@ -38,15 +44,31 @@ import { of } from 'rxjs';
   template: `
     <div class="dashboard-container">
       <!-- Spinner de carga -->
-      <div *ngIf="isLoading" class="loading-overlay">
+      <div *ngIf="isLoading()" class="loading-overlay">
         <mat-spinner diameter="50"></mat-spinner>
         <p>Cargando datos...</p>
       </div>
 
-      <!-- Título -->
       <div class="dashboard-header">
-        <h1>Dashboard Financiero</h1>
-        <p class="subtitle">Resumen de tu situación financiera</p>
+        <div>
+          <h1>Dashboard Financiero</h1>
+          <p class="subtitle">Tu mes, de un vistazo</p>
+        </div>
+
+        <div class="month-nav">
+          <button mat-icon-button (click)="previousMonth()" aria-label="Mes anterior">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <span class="month-name">{{ monthName() }}</span>
+          <button mat-icon-button (click)="nextMonth()" aria-label="Mes siguiente">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="month-empty" *ngIf="!isLoading() && !hasData()">
+        <mat-icon>calendar_month</mat-icon>
+        <p>No hay movimientos en {{ monthName() }}</p>
       </div>
 
       <!-- KPI Cards: cada una abre su detalle -->
@@ -63,7 +85,7 @@ import { of } from 'rxjs';
             </div>
             <div class="kpi-info">
               <span class="kpi-label">Balance Total</span>
-              <span class="kpi-value">{{ formatCurrency(dashboardData.totalBalance) }}</span>
+              <span class="kpi-value">{{ formatCurrency(dashboardData().totalBalance) }}</span>
             </div>
             <mat-icon class="kpi-arrow">chevron_right</mat-icon>
           </mat-card-content>
@@ -82,7 +104,7 @@ import { of } from 'rxjs';
             </div>
             <div class="kpi-info">
               <span class="kpi-label">Ingresos</span>
-              <span class="kpi-value">{{ formatCurrency(dashboardData.totalIncome) }}</span>
+              <span class="kpi-value">{{ formatCurrency(dashboardData().totalIncome) }}</span>
             </div>
             <mat-icon class="kpi-arrow">chevron_right</mat-icon>
           </mat-card-content>
@@ -101,7 +123,7 @@ import { of } from 'rxjs';
             </div>
             <div class="kpi-info">
               <span class="kpi-label">Gastos</span>
-              <span class="kpi-value">{{ formatCurrency(dashboardData.totalExpense) }}</span>
+              <span class="kpi-value">{{ formatCurrency(dashboardData().totalExpense) }}</span>
             </div>
             <mat-icon class="kpi-arrow">chevron_right</mat-icon>
           </mat-card-content>
@@ -120,7 +142,7 @@ import { of } from 'rxjs';
             </div>
             <div class="kpi-info">
               <span class="kpi-label">Total Ahorrado</span>
-              <span class="kpi-value">{{ formatCurrency(dashboardData.totalSavings) }}</span>
+              <span class="kpi-value">{{ formatCurrency(dashboardData().totalSavings) }}</span>
             </div>
             <mat-icon class="kpi-arrow">chevron_right</mat-icon>
           </mat-card-content>
@@ -134,12 +156,12 @@ import { of } from 'rxjs';
         </mat-card-header>
         <mat-card-content>
           <div class="category-list">
-            <div *ngIf="dashboardData.expensesByCategory.length === 0" class="empty-state">
+            <div *ngIf="dashboardData().expensesByCategory.length === 0" class="empty-state">
               <mat-icon>category</mat-icon>
               <p>No hay gastos registrados</p>
             </div>
 
-            <div *ngFor="let category of dashboardData.expensesByCategory" class="category-item">
+            <div *ngFor="let category of dashboardData().expensesByCategory" class="category-item">
               <div class="category-header">
                 <span class="category-name">{{ category.category.nombre }}</span>
                 <span class="category-amount">{{ formatCurrency(category.amount) }}</span>
@@ -170,12 +192,12 @@ import { of } from 'rxjs';
         </mat-card-header>
         <mat-card-content>
           <div class="transactions-list">
-            <div *ngIf="dashboardData.recentTransactions.length === 0" class="empty-state">
+            <div *ngIf="dashboardData().recentTransactions.length === 0" class="empty-state">
               <mat-icon>receipt</mat-icon>
               <p>No hay transacciones</p>
             </div>
 
-            <div *ngFor="let transaction of dashboardData.recentTransactions" class="transaction-item">
+            <div *ngFor="let transaction of dashboardData().recentTransactions" class="transaction-item">
               <div class="transaction-left">
                 <div class="transaction-icon" [ngClass]="transaction.kind">
                   <mat-icon>{{ getTransactionIcon(transaction.kind) }}</mat-icon>
@@ -229,6 +251,11 @@ import { of } from 'rxjs';
 
       .dashboard-header {
         margin-bottom: var(--spacing-2xl);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: var(--spacing-lg);
+        flex-wrap: wrap;
 
         h1 {
           font-size: var(--font-size-2xl);
@@ -240,6 +267,34 @@ import { of } from 'rxjs';
         .subtitle {
           color: var(--color-text-secondary);
           font-size: var(--font-size-sm);
+        }
+      }
+
+      .month-nav {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
+
+      .month-name {
+        min-width: 160px;
+        text-align: center;
+        font-weight: 600;
+        text-transform: capitalize;
+      }
+
+      .month-empty {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md) var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        background: rgba(148, 163, 184, 0.08);
+        color: var(--color-text-muted);
+
+        p {
+          margin: 0;
         }
       }
 
@@ -527,103 +582,96 @@ import { of } from 'rxjs';
 })
 export class DashboardComponent implements OnInit {
   private transactionService = inject(TransactionService);
-  private mockDataService = inject(MockDataService);
   private router = inject(Router);
-  private cdr = inject(ChangeDetectorRef);
 
-  isLoading = true;
-  dashboardData: DashboardData = {
-    totalBalance: 0,
-    totalIncome: 0,
-    totalExpense: 0,
-    currentMonth: '',
-    expensesByCategory: [],
-    recentTransactions: [],
-    totalSavings: 0,
-    savingsProgress: 0
-  };
+  isLoading = signal(true);
+  private allTransactions = signal<Transaction[]>([]);
+  private reference = signal(new Date());
+
+  monthName = computed(() =>
+    new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric' }).format(this.reference())
+  );
+
+  /** El dashboard habla siempre de un mes concreto, no del histórico. */
+  private monthTransactions = computed(() => {
+    const ref = this.reference();
+
+    return this.allTransactions().filter(t => {
+      const date = new Date(t.date);
+      return date.getFullYear() === ref.getFullYear() && date.getMonth() === ref.getMonth();
+    });
+  });
+
+  hasData = computed(() => this.monthTransactions().length > 0);
+
+  dashboardData = computed<DashboardData>(() => {
+    const transactions = this.monthTransactions();
+
+    const income = sumBy(transactions, 'income');
+    const expense = sumBy(transactions, 'expense') + sumBy(transactions, 'debt');
+    const savings = sumBy(transactions, 'saving');
+
+    const categoryMap = new Map<string, { amount: number; category: any }>();
+    for (const t of transactions) {
+      if (t.kind !== 'expense' && t.kind !== 'debt') continue;
+
+      if (!categoryMap.has(t.categoryId)) {
+        const category = t.category ?? { id: t.categoryId, nombre: t.categoryName ?? 'Sin categoría' };
+        categoryMap.set(t.categoryId, { amount: 0, category });
+      }
+      categoryMap.get(t.categoryId)!.amount += Math.abs(t.amount);
+    }
+
+    const expensesByCategory = [...categoryMap.values()]
+      .map(c => ({
+        category: c.category,
+        amount: c.amount,
+        percentage: expense > 0 ? (c.amount / expense) * 100 : 0
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    return {
+      // El ahorro sale del disponible: es dinero que ya has apartado.
+      totalBalance: income - expense - savings,
+      totalIncome: income,
+      totalExpense: expense,
+      currentMonth: this.monthName(),
+      expensesByCategory,
+      recentTransactions: [...transactions]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5),
+      totalSavings: savings,
+      savingsProgress: 0
+    };
+  });
 
   ngOnInit(): void {
     this.loadDashboardData();
   }
 
+  previousMonth(): void {
+    const ref = this.reference();
+    this.reference.set(new Date(ref.getFullYear(), ref.getMonth() - 1, 1));
+  }
+
+  nextMonth(): void {
+    const ref = this.reference();
+    this.reference.set(new Date(ref.getFullYear(), ref.getMonth() + 1, 1));
+  }
+
   loadDashboardData(): void {
-    this.isLoading = true;
-    this.cdr.detectChanges();
+    this.isLoading.set(true);
 
     this.transactionService.getTransactions().pipe(
       timeout(10000),
       catchError(() => of([]))
     ).subscribe({
       next: (transactions) => {
-        try {
-          if (transactions?.length) {
-            this.processDashboardData(transactions);
-          } else {
-            // Sin datos propios se muestra el ejemplo, para no dejar la
-            // pantalla en blanco la primera vez que se entra.
-            this.dashboardData = this.mockDataService.getDashboardData();
-          }
-        } finally {
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        }
+        this.allTransactions.set(transactions ?? []);
+        this.isLoading.set(false);
       },
-      error: () => {
-        this.dashboardData = this.mockDataService.getDashboardData();
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
+      error: () => this.isLoading.set(false)
     });
-  }
-
-  private processDashboardData(transactions: Transaction[]): void {
-    const now = new Date();
-    const currentMonth = new Intl.DateTimeFormat('es-CO', {
-      month: 'long',
-      year: 'numeric'
-    }).format(now);
-
-    const income = transactions
-      .filter(t => t.kind === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const expense = transactions
-      .filter(t => t.kind === 'expense')
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-    // La API manda categoryName plano; los mocks traen el objeto category.
-    const categoryMap = new Map<string, { amount: number; category: any }>();
-    transactions
-      .filter(t => t.kind === 'expense')
-      .forEach(t => {
-        const key = t.categoryId;
-        if (!categoryMap.has(key)) {
-          const category = t.category ?? { id: key, nombre: t.categoryName ?? 'Sin categoría' };
-          categoryMap.set(key, { amount: 0, category });
-        }
-        categoryMap.get(key)!.amount += Math.abs(t.amount);
-      });
-
-    const totalExpense = Array.from(categoryMap.values()).reduce((sum, c) => sum + c.amount, 0);
-    const expensesByCategory = Array.from(categoryMap.values()).map(c => ({
-      category: c.category,
-      amount: c.amount,
-      percentage: totalExpense > 0 ? (c.amount / totalExpense) * 100 : 0
-    }));
-
-    this.dashboardData = {
-      totalBalance: income - expense,
-      totalIncome: income,
-      totalExpense: expense,
-      currentMonth,
-      expensesByCategory,
-      recentTransactions: transactions.slice(0, 5),
-      totalSavings: transactions
-        .filter(t => t.kind === 'saving')
-        .reduce((sum, t) => sum + t.amount, 0),
-      savingsProgress: 65
-    };
   }
 
   /**
