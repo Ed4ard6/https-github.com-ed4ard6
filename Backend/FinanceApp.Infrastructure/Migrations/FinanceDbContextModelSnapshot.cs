@@ -138,6 +138,46 @@ namespace FinanceApp.Infrastructure.Migrations
                     b.ToTable("Debts");
                 });
 
+            modelBuilder.Entity("FinanceApp.Domain.Entities.FixedExpense", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CategoryId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PaymentDay")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("FixedExpenses");
+                });
+
             modelBuilder.Entity("FinanceApp.Domain.Entities.Salary", b =>
                 {
                     b.Property<string>("Id")
@@ -161,6 +201,44 @@ namespace FinanceApp.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Salaries");
+                });
+
+            modelBuilder.Entity("FinanceApp.Domain.Entities.SavingsGoal", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("InitialAmount")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("TargetAmount")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TargetDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SavingsGoals");
                 });
 
             modelBuilder.Entity("FinanceApp.Domain.Entities.Transaction", b =>
@@ -188,6 +266,9 @@ namespace FinanceApp.Infrastructure.Migrations
                     b.Property<int>("Kind")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("SavingsGoalId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
@@ -198,6 +279,8 @@ namespace FinanceApp.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("SavingsGoalId");
 
                     b.HasIndex("UserId");
 
@@ -276,10 +359,39 @@ namespace FinanceApp.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("FinanceApp.Domain.Entities.FixedExpense", b =>
+                {
+                    b.HasOne("FinanceApp.Domain.Entities.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("FinanceApp.Domain.Entities.User", "User")
+                        .WithMany("FixedExpenses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("FinanceApp.Domain.Entities.Salary", b =>
                 {
                     b.HasOne("FinanceApp.Domain.Entities.User", "User")
                         .WithMany("Salaries")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FinanceApp.Domain.Entities.SavingsGoal", b =>
+                {
+                    b.HasOne("FinanceApp.Domain.Entities.User", "User")
+                        .WithMany("SavingsGoals")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -295,6 +407,11 @@ namespace FinanceApp.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FinanceApp.Domain.Entities.SavingsGoal", "SavingsGoal")
+                        .WithMany()
+                        .HasForeignKey("SavingsGoalId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("FinanceApp.Domain.Entities.User", "User")
                         .WithMany("Transactions")
                         .HasForeignKey("UserId")
@@ -302,6 +419,8 @@ namespace FinanceApp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+
+                    b.Navigation("SavingsGoal");
 
                     b.Navigation("User");
                 });
@@ -319,7 +438,11 @@ namespace FinanceApp.Infrastructure.Migrations
 
                     b.Navigation("Debts");
 
+                    b.Navigation("FixedExpenses");
+
                     b.Navigation("Salaries");
+
+                    b.Navigation("SavingsGoals");
 
                     b.Navigation("Transactions");
                 });
