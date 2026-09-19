@@ -15,7 +15,6 @@ import {
   ConfirmDialogData
 } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TransactionService } from '../../../core/services/transaction.service';
-import { MockDataService } from '../../../core/services/mock-data.service';
 import { Transaction } from '../../../core/models/domain.models';
 
 @Component({
@@ -242,7 +241,6 @@ import { Transaction } from '../../../core/models/domain.models';
 })
 export class TransactionsListComponent implements OnInit {
   private transactionService = inject(TransactionService);
-  private mockDataService = inject(MockDataService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
@@ -314,13 +312,12 @@ export class TransactionsListComponent implements OnInit {
     this.filterMonth.set('all');
   }
 
+  // Sin fallback a mock: las filas traen botones de editar y eliminar, y
+  // sobre una transacción inventada esas acciones fallan.
   loadTransactions() {
     this.transactionService.getTransactions().subscribe({
       next: (data) => this.transactions.set(data ?? []),
-      error: (error) => {
-        console.warn('Error cargando transacciones, usando mock:', error);
-        this.transactions.set(this.mockDataService.getTransactions());
-      }
+      error: () => this.snackBar.open('No se pudieron cargar las transacciones', 'Cerrar', { duration: 5000 })
     });
   }
 

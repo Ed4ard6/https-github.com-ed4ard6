@@ -551,20 +551,17 @@ export class DashboardComponent implements OnInit {
     this.isLoading = true;
     this.cdr.detectChanges();
 
-    const subscription = this.transactionService.getTransactions().pipe(
+    this.transactionService.getTransactions().pipe(
       timeout(10000),
-      catchError((error) => {
-        console.warn('Error loading transactions, using mock data:', error?.message);
-        return of([]);
-      })
+      catchError(() => of([]))
     ).subscribe({
       next: (transactions) => {
         try {
-          if (transactions && Array.isArray(transactions) && transactions.length > 0) {
-            console.log('✅ Loaded transactions from API:', transactions.length);
+          if (transactions?.length) {
             this.processDashboardData(transactions);
           } else {
-            console.log('⚠️ Empty response, using mock data');
+            // Sin datos propios se muestra el ejemplo, para no dejar la
+            // pantalla en blanco la primera vez que se entra.
             this.dashboardData = this.mockDataService.getDashboardData();
           }
         } finally {
@@ -572,8 +569,7 @@ export class DashboardComponent implements OnInit {
           this.cdr.detectChanges();
         }
       },
-      error: (error) => {
-        console.error('❌ Dashboard error:', error);
+      error: () => {
         this.dashboardData = this.mockDataService.getDashboardData();
         this.isLoading = false;
         this.cdr.detectChanges();

@@ -12,11 +12,9 @@ import {
   ConfirmDialogData
 } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { KindLabelPipe } from '../../../shared/pipes/kind-label.pipe';
-import { MockDataService } from '../../../core/services/mock-data.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Category } from '../../../core/models/domain.models';
-import { timeout, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { timeout } from 'rxjs/operators';
 
 @Component({
   selector: 'app-categories-list',
@@ -92,7 +90,6 @@ import { of } from 'rxjs';
 })
 export class CategoriesListComponent implements OnInit {
   private categoryService = inject(CategoryService);
-  private mockDataService = inject(MockDataService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
@@ -105,27 +102,16 @@ export class CategoriesListComponent implements OnInit {
     this.loadCategories();
   }
 
+  // Sin fallback a mock: enseñar categorías que no existen en la base de
+  // datos lleva a errores al intentar usarlas.
   loadCategories() {
-    this.categoryService.getCategories().pipe(
-      timeout(8000),
-      catchError((error) => {
-        console.warn('⚠️ Error loading categories from API:', error?.message);
-        return of([]);
-      })
-    ).subscribe({
+    this.categoryService.getCategories().pipe(timeout(8000)).subscribe({
       next: (data) => {
-        if (data && Array.isArray(data) && data.length > 0) {
-          console.log('✅ Loaded categories from API:', data.length);
-          this.categories = data;
-        } else {
-          console.log('⚠️ Empty categories, using mock data');
-          this.categories = this.mockDataService.getCategories();
-        }
+        this.categories = data ?? [];
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('❌ Categories error:', error);
-        this.categories = this.mockDataService.getCategories();
+      error: () => {
+        this.snackBar.open('No se pudieron cargar las categorías', 'Cerrar', { duration: 5000 });
         this.cdr.detectChanges();
       }
     });

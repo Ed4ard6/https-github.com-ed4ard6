@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { User, AuthResponse, JwtToken } from '../models/domain.models';
 
@@ -28,19 +28,10 @@ export class AuthService {
   login(email: string, password: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, { email, password }).pipe(
       tap(response => {
-        console.log('✅ Login exitoso, guardando token:', response.token?.substring(0, 20) + '...');
         this.storeToken(response.token);
         this.storeUser(response.user);
         this.isAuthenticatedSubject.next(true);
         this.userSubject.next(response.user);
-
-        // Verificar que se guardó
-        const storedToken = localStorage.getItem(this.TOKEN_KEY);
-        console.log('📦 Token almacenado:', storedToken ? 'SÍ ✅' : 'NO ❌');
-      }),
-      catchError(error => {
-        console.error('❌ Login error:', error);
-        throw error;
       })
     );
   }
@@ -56,10 +47,6 @@ export class AuthService {
         this.storeUser(response.user);
         this.isAuthenticatedSubject.next(true);
         this.userSubject.next(response.user);
-      }),
-      catchError(error => {
-        console.error('Register error:', error);
-        throw error;
       })
     );
   }
