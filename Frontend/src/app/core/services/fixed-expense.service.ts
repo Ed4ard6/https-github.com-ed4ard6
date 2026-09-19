@@ -7,6 +7,8 @@ export interface FixedExpense {
   nombre: string;
   amount: number;
   paymentDay: number;
+  /** Apartar la mitad en cada quincena en vez de todo en la del pago */
+  splitBetweenPaydays: boolean;
   categoryId: string | null;
   categoryName: string;
   activo: boolean;
@@ -16,6 +18,7 @@ export interface SaveFixedExpenseRequest {
   nombre: string;
   amount: number;
   paymentDay: number;
+  splitBetweenPaydays: boolean;
   categoryId: string | null;
 }
 

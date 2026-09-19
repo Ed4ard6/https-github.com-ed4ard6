@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FixedExpenseService, FixedExpense } from '../../core/services/fixed-expense.service';
@@ -29,6 +30,7 @@ import {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatSlideToggleModule,
     MatSnackBarModule
   ],
   template: `
@@ -96,6 +98,14 @@ import {
             </button>
           </div>
         </div>
+
+        <mat-slide-toggle class="split-toggle" [(ngModel)]="form.splitBetweenPaydays">
+          Repartir entre las dos quincenas
+        </mat-slide-toggle>
+        <p class="split-hint">
+          Actívalo si el recibo es grande: en vez de cargarlo entero en la quincena
+          de su fecha, se aparta la mitad en cada una.
+        </p>
       </mat-card>
 
       <mat-card class="empty-card" *ngIf="expenses().length === 0">
@@ -116,8 +126,19 @@ import {
           </div>
 
           <div class="expense-info">
-            <span class="expense-name">{{ expense.nombre }}</span>
-            <span class="expense-category">{{ expense.categoryName || 'Sin categoría' }}</span>
+            <span class="expense-name">
+              {{ expense.nombre }}
+              <span class="split-badge" *ngIf="expense.splitBetweenPaydays">
+                <mat-icon>call_split</mat-icon>
+                repartido
+              </span>
+            </span>
+            <span class="expense-category">
+              {{ expense.categoryName || 'Sin categoría' }}
+              <ng-container *ngIf="expense.splitBetweenPaydays">
+                · {{ formatCurrency(expense.amount / 2) }} por quincena
+              </ng-container>
+            </span>
           </div>
 
           <span class="expense-amount">{{ formatCurrency(expense.amount) }}</span>
@@ -219,6 +240,37 @@ import {
       gap: var(--spacing-sm);
       align-items: center;
       height: 56px;
+    }
+
+    .split-toggle {
+      margin-top: var(--spacing-lg);
+    }
+
+    .split-hint {
+      margin: var(--spacing-xs) 0 0;
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+      max-width: 620px;
+    }
+
+    .split-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      margin-left: var(--spacing-sm);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      background: rgba(124, 58, 237, 0.15);
+      color: var(--color-primary);
+      font-size: 11px;
+      font-weight: 600;
+      vertical-align: middle;
+
+      mat-icon {
+        font-size: 13px;
+        width: 13px;
+        height: 13px;
+      }
     }
 
     .expense-row {
@@ -333,6 +385,7 @@ export class FixedExpensesComponent implements OnInit {
     nombre: '',
     amount: null as number | null,
     paymentDay: null as number | null,
+    splitBetweenPaydays: false,
     categoryId: null as string | null
   };
 
@@ -381,6 +434,7 @@ export class FixedExpensesComponent implements OnInit {
       nombre: expense.nombre,
       amount: expense.amount,
       paymentDay: expense.paymentDay,
+      splitBetweenPaydays: expense.splitBetweenPaydays,
       categoryId: expense.categoryId
     };
   }
@@ -398,6 +452,7 @@ export class FixedExpensesComponent implements OnInit {
       nombre: this.form.nombre.trim(),
       amount: Number(this.form.amount),
       paymentDay: Number(this.form.paymentDay),
+      splitBetweenPaydays: this.form.splitBetweenPaydays,
       categoryId: this.form.categoryId
     };
 
@@ -446,7 +501,13 @@ export class FixedExpensesComponent implements OnInit {
   }
 
   private resetForm() {
-    this.form = { nombre: '', amount: null, paymentDay: null, categoryId: null };
+    this.form = {
+      nombre: '',
+      amount: null,
+      paymentDay: null,
+      splitBetweenPaydays: false,
+      categoryId: null
+    };
   }
 
   formatCurrency(amount: number): string {

@@ -77,6 +77,7 @@ public class FixedExpensesController : ControllerBase
             Nombre = request.Nombre.Trim(),
             Amount = request.Amount,
             PaymentDay = request.PaymentDay,
+            SplitBetweenPaydays = request.SplitBetweenPaydays,
             CategoryId = string.IsNullOrWhiteSpace(request.CategoryId) ? null : request.CategoryId,
             Activo = true,
             CreatedAt = now,
@@ -106,6 +107,7 @@ public class FixedExpensesController : ControllerBase
         expense.Nombre = request.Nombre.Trim();
         expense.Amount = request.Amount;
         expense.PaymentDay = request.PaymentDay;
+        expense.SplitBetweenPaydays = request.SplitBetweenPaydays;
         expense.CategoryId = string.IsNullOrWhiteSpace(request.CategoryId) ? null : request.CategoryId;
         expense.UpdatedAt = DateTime.UtcNow;
         _context.SaveChanges();
@@ -157,6 +159,7 @@ public class FixedExpensesController : ControllerBase
         Nombre = expense.Nombre,
         Amount = expense.Amount,
         PaymentDay = expense.PaymentDay,
+        SplitBetweenPaydays = expense.SplitBetweenPaydays,
         CategoryId = expense.CategoryId,
         CategoryName = expense.Category?.Nombre ?? string.Empty,
         Activo = expense.Activo

@@ -67,6 +67,29 @@ import { buildPaydayPlan } from '../../../core/finance/payday-plan';
         </div>
       </mat-card>
 
+      <mat-card class="suggestion" *ngIf="suggestion() as s" [class.partial]="!s.covered">
+        <mat-icon>{{ s.covered ? 'savings' : 'warning' }}</mat-icon>
+        <div class="suggestion-text">
+          <strong *ngIf="s.covered">
+            Aparta {{ formatCurrency(s.amount) }} de la {{ s.fromPayday | lowercase }}
+          </strong>
+          <strong *ngIf="!s.covered">
+            Ni juntando las dos quincenas llegas
+          </strong>
+          <p *ngIf="s.covered">
+            A la {{ s.toPayday | lowercase }} le faltan {{ formatCurrency(s.amount) }} para cubrir
+            sus pagos. Guardando ese dinero de la quincena que va holgada, llegas a la
+            fecha sin descubierto.
+          </p>
+          <p *ngIf="!s.covered">
+            A la {{ s.toPayday | lowercase }} le faltan {{ formatCurrency(s.amount + s.uncovered) }}
+            y la otra solo puede aportar {{ formatCurrency(s.amount) }}. Te quedarían
+            {{ formatCurrency(s.uncovered) }} sin cubrir: conviene bajar algún gasto o
+            repartir un recibo entre las dos quincenas.
+          </p>
+        </div>
+      </mat-card>
+
       <div class="quincenas-grid" *ngIf="salary() > 0">
         <mat-card class="quincena-card" *ngFor="let q of quincenas()" [class.negative]="q.available < 0">
           <div class="quincena-head">
@@ -103,7 +126,9 @@ import { buildPaydayPlan } from '../../../core/finance/payday-plan';
               <mat-icon>{{ commitmentIcon(c.tipo) }}</mat-icon>
               <span class="commitment-name">
                 {{ c.nombre }}
-                <small *ngIf="c.day">día {{ c.day }}</small>
+                <small *ngIf="c.day">
+                  {{ c.esProvision ? 'se aparta para el día ' + c.day : 'día ' + c.day }}
+                </small>
               </span>
               <span class="commitment-amount">{{ formatCurrency(c.amount) }}</span>
             </div>
@@ -118,9 +143,11 @@ import { buildPaydayPlan } from '../../../core/finance/payday-plan';
       <mat-card class="notes" *ngIf="salary() > 0">
         <mat-icon>info</mat-icon>
         <p>
-          Las cuotas de deuda y los gastos fijos caen en la quincena que corresponde
-          a su día de pago. Los presupuestos del mes se reparten a partes iguales
-          entre las dos, porque el gasto del día a día no tiene fecha fija.
+          Las cuotas de deuda y los gastos fijos caen en la quincena de su día de pago,
+          salvo los que marques para repartir, que se apartan a medias. De los
+          presupuestos solo se cuenta <strong>lo que te queda por gastar</strong>, no el
+          total del mes, y se divide entre las dos quincenas porque el gasto del día a
+          día no tiene fecha fija.
         </p>
       </mat-card>
     </div>
@@ -283,6 +310,40 @@ import { buildPaydayPlan } from '../../../core/finance/payday-plan';
       border-top: 1px solid var(--color-border);
     }
 
+    .suggestion {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      padding: var(--spacing-lg);
+      border-left: 3px solid var(--color-success);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .suggestion.partial {
+      border-left-color: var(--color-warning);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .suggestion > mat-icon {
+      color: var(--color-success);
+      flex-shrink: 0;
+    }
+
+    .suggestion.partial > mat-icon {
+      color: var(--color-warning);
+    }
+
+    .suggestion-text strong {
+      display: block;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .suggestion-text p {
+      margin: 0;
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+    }
+
     .notes {
       display: flex;
       align-items: flex-start;
@@ -338,7 +399,7 @@ export class PlannerComponent implements OnInit {
 
   salaryInput: number | null = null;
 
-  quincenas = computed(() =>
+  private plan = computed(() =>
     buildPaydayPlan(
       this.salary(),
       this.debts().map(d => ({
@@ -346,14 +407,20 @@ export class PlannerComponent implements OnInit {
         minimumPayment: d.minimumPayment,
         paymentDay: d.paymentDay
       })),
-      this.budgets().reduce((sum, b) => sum + b.amount, 0),
+      // Lo que queda del presupuesto, no el total: si ya gastaste 15 de 50,
+      // lo que hay que repartir entre quincenas son los 35 restantes.
+      this.budgets().reduce((sum, b) => sum + Math.max(0, b.amount - b.spent), 0),
       this.fixedExpenses().map(f => ({
         nombre: f.nombre,
         amount: f.amount,
-        paymentDay: f.paymentDay
+        paymentDay: f.paymentDay,
+        splitBetweenPaydays: f.splitBetweenPaydays
       }))
     )
   );
+
+  quincenas = computed(() => this.plan().paydays);
+  suggestion = computed(() => this.plan().suggestion);
 
   ngOnInit() {
     forkJoin({

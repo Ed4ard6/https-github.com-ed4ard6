@@ -19,6 +19,12 @@ public class FixedExpense
     /// <summary>Día del mes en que se paga, de 1 a 31</summary>
     public int PaymentDay { get; set; }
 
+    /// <summary>
+    /// Apartar la mitad en cada quincena en lugar de cargar el importe entero
+    /// en la del día de pago. Pensado para recibos que no caben en una sola.
+    /// </summary>
+    public bool SplitBetweenPaydays { get; set; }
+
     public bool Activo { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

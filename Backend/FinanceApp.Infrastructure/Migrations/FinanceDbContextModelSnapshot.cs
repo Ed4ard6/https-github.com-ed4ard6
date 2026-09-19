@@ -162,6 +162,9 @@ namespace FinanceApp.Infrastructure.Migrations
                     b.Property<int>("PaymentDay")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("SplitBetweenPaydays")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
