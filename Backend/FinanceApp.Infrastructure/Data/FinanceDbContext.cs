@@ -18,6 +18,7 @@ public class FinanceDbContext : DbContext
     public DbSet<Transaction> Transactions { get; set; } = null!;
     public DbSet<Salary> Salaries { get; set; } = null!;
     public DbSet<Debt> Debts { get; set; } = null!;
+    public DbSet<Budget> Budgets { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -70,5 +71,23 @@ public class FinanceDbContext : DbContext
             .WithMany(u => u.Debts)
             .HasForeignKey(d => d.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Configuración de Budget
+        modelBuilder.Entity<Budget>()
+            .HasKey(b => b.Id);
+        modelBuilder.Entity<Budget>()
+            .HasOne(b => b.User)
+            .WithMany(u => u.Budgets)
+            .HasForeignKey(b => b.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Budget>()
+            .HasOne(b => b.Category)
+            .WithMany()
+            .HasForeignKey(b => b.CategoryId)
+            .OnDelete(DeleteBehavior.Cascade);
+        // Un solo presupuesto por categoría y mes
+        modelBuilder.Entity<Budget>()
+            .HasIndex(b => new { b.UserId, b.CategoryId, b.Year, b.Month })
+            .IsUnique();
     }
 }
