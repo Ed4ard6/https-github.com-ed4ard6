@@ -35,10 +35,12 @@ public class DebtsController : ControllerBase
     public IActionResult GetDebts()
     {
         var userId = GetUserId();
+        // SQLite guarda decimal como texto y no sabe ordenarlo, así que
+        // se materializa primero y se ordena en memoria.
         var debts = _context.Debts
             .Where(d => d.UserId == userId && d.Activo)
-            .OrderByDescending(d => d.Balance)
-            .ToList();
+            .ToList()
+            .OrderByDescending(d => d.Balance);
 
         return Ok(debts.Select(ToDto));
     }
