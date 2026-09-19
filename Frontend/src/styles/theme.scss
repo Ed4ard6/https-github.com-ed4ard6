@@ -100,6 +100,44 @@ table {
 // MATERIAL TABLE STYLES
 // ============================================================================
 
+// ============================================================================
+// ANIMACIONES
+// ============================================================================
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mat-mdc-card,
+.page-enter {
+  animation: fade-in-up 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mat-mdc-table .mat-mdc-row {
+  animation: fade-in 0.25s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 ::ng-deep {
   .mat-mdc-table {
     background-color: var(--color-bg-card) !important;
@@ -125,6 +163,7 @@ table {
   .mat-mdc-card {
     background-color: var(--color-bg-card) !important;
     border-color: var(--color-border) !important;
+    border-radius: var(--radius-lg) !important;
   }
 }
 
@@ -135,9 +174,21 @@ table {
 ::ng-deep .mat-mdc-form-field {
   width: 100%;
 
+  // Esquinas redondeadas: por defecto la caja es completamente cuadrada.
+  --mdc-outlined-text-field-container-shape: 12px;
+
   .mat-mdc-form-field-label {
     color: var(--color-text-secondary) !important;
     font-weight: 500 !important;
+  }
+
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__trailing {
+    transition: border-color var(--transition-fast);
+  }
+
+  &:hover:not(.mat-focused) .mdc-notched-outline > * {
+    border-color: var(--color-border-light) !important;
   }
 
   // Aire a los lados: por defecto el texto queda pegado al borde.
@@ -193,6 +244,38 @@ table {
   .mdc-notched-outline .mdc-notched-outline__notch,
   .mdc-notched-outline .mdc-notched-outline__trailing {
     border-color: var(--color-primary) !important;
+  }
+}
+
+// ============================================================================
+// BOTONES
+// ============================================================================
+
+::ng-deep {
+  .mat-mdc-raised-button,
+  .mat-mdc-unelevated-button,
+  .mat-mdc-button,
+  .mat-mdc-outlined-button {
+    border-radius: var(--radius-md) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+      background-color var(--transition-fast);
+  }
+
+  .mat-mdc-raised-button:not(:disabled):hover,
+  .mat-mdc-unelevated-button:not(:disabled):hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .mat-mdc-raised-button:not(:disabled):active,
+  .mat-mdc-unelevated-button:not(:disabled):active {
+    transform: none;
+  }
+
+  .mat-mdc-icon-button {
+    transition: background-color var(--transition-fast), color var(--transition-fast);
   }
 }
 

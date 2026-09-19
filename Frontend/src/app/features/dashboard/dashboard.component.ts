@@ -7,7 +7,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Router } from '@angular/router';
+import { MatRippleModule } from '@angular/material/core';
+import { Router, RouterLink } from '@angular/router';
 import { TransactionService } from '../../core/services/transaction.service';
 import { MockDataService } from '../../core/services/mock-data.service';
 import { DashboardData, Transaction, CategoryKind } from '../../core/models/domain.models';
@@ -30,7 +31,9 @@ import { of } from 'rxjs';
     MatButtonModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
-    MatTableModule
+    MatTableModule,
+    MatRippleModule,
+    RouterLink
   ],
   template: `
     <div class="dashboard-container">
@@ -46,10 +49,14 @@ import { of } from 'rxjs';
         <p class="subtitle">Resumen de tu situación financiera</p>
       </div>
 
-      <!-- KPI Cards -->
+      <!-- KPI Cards: cada una abre su detalle -->
       <div class="kpi-grid">
-        <!-- Balance Total -->
-        <mat-card class="kpi-card balance">
+        <mat-card
+          class="kpi-card balance"
+          [routerLink]="['/reports/monthly']"
+          matRipple
+          tabindex="0"
+        >
           <mat-card-content>
             <div class="kpi-icon">
               <mat-icon>account_balance</mat-icon>
@@ -58,11 +65,17 @@ import { of } from 'rxjs';
               <span class="kpi-label">Balance Total</span>
               <span class="kpi-value">{{ formatCurrency(dashboardData.totalBalance) }}</span>
             </div>
+            <mat-icon class="kpi-arrow">chevron_right</mat-icon>
           </mat-card-content>
         </mat-card>
 
-        <!-- Ingresos -->
-        <mat-card class="kpi-card income">
+        <mat-card
+          class="kpi-card income"
+          [routerLink]="['/transactions']"
+          [queryParams]="{ kind: 'income' }"
+          matRipple
+          tabindex="0"
+        >
           <mat-card-content>
             <div class="kpi-icon">
               <mat-icon>trending_up</mat-icon>
@@ -71,11 +84,17 @@ import { of } from 'rxjs';
               <span class="kpi-label">Ingresos</span>
               <span class="kpi-value">{{ formatCurrency(dashboardData.totalIncome) }}</span>
             </div>
+            <mat-icon class="kpi-arrow">chevron_right</mat-icon>
           </mat-card-content>
         </mat-card>
 
-        <!-- Gastos -->
-        <mat-card class="kpi-card expense">
+        <mat-card
+          class="kpi-card expense"
+          [routerLink]="['/transactions']"
+          [queryParams]="{ kind: 'expense' }"
+          matRipple
+          tabindex="0"
+        >
           <mat-card-content>
             <div class="kpi-icon">
               <mat-icon>trending_down</mat-icon>
@@ -84,11 +103,17 @@ import { of } from 'rxjs';
               <span class="kpi-label">Gastos</span>
               <span class="kpi-value">{{ formatCurrency(dashboardData.totalExpense) }}</span>
             </div>
+            <mat-icon class="kpi-arrow">chevron_right</mat-icon>
           </mat-card-content>
         </mat-card>
 
-        <!-- Ahorros -->
-        <mat-card class="kpi-card savings">
+        <mat-card
+          class="kpi-card savings"
+          [routerLink]="['/transactions']"
+          [queryParams]="{ kind: 'saving' }"
+          matRipple
+          tabindex="0"
+        >
           <mat-card-content>
             <div class="kpi-icon">
               <mat-icon>savings</mat-icon>
@@ -97,6 +122,7 @@ import { of } from 'rxjs';
               <span class="kpi-label">Total Ahorrado</span>
               <span class="kpi-value">{{ formatCurrency(dashboardData.totalSavings) }}</span>
             </div>
+            <mat-icon class="kpi-arrow">chevron_right</mat-icon>
           </mat-card-content>
         </mat-card>
       </div>
@@ -230,10 +256,31 @@ import { of } from 'rxjs';
         border-radius: var(--radius-lg);
         overflow: hidden;
         transition: all var(--transition-base);
+        cursor: pointer;
+        text-decoration: none;
 
         &:hover {
           box-shadow: var(--shadow-lg);
           transform: translateY(-2px);
+          border-color: var(--color-primary);
+
+          .kpi-arrow {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        &:focus-visible {
+          outline: 2px solid var(--color-primary);
+          outline-offset: 2px;
+        }
+
+        .kpi-arrow {
+          margin-left: auto;
+          color: var(--color-primary);
+          opacity: 0;
+          transform: translateX(-6px);
+          transition: opacity var(--transition-fast), transform var(--transition-fast);
         }
 
         mat-card-content {
