@@ -14,13 +14,7 @@ import { SalaryService } from '../../../core/services/salary.service';
 import { DebtService } from '../../../core/services/debt.service';
 import { BudgetService, Budget } from '../../../core/services/budget.service';
 import { Debt } from '../../../core/models/domain.models';
-
-interface Commitment {
-  nombre: string;
-  amount: number;
-  tipo: 'deuda' | 'presupuesto';
-  day?: number;
-}
+import { buildPaydayPlan } from '../../../core/finance/payday-plan';
 
 @Component({
   selector: 'app-planner',
@@ -341,21 +335,17 @@ export class PlannerComponent implements OnInit {
 
   salaryInput = 0;
 
-  quincenas = computed(() => {
-    const mitadSalario = this.salary() / 2;
-
-    // Una cuota cae en la quincena que le toca por su día de pago.
-    const deudasPrimera = this.debts().filter(d => d.paymentDay <= 15);
-    const deudasSegunda = this.debts().filter(d => d.paymentDay > 15);
-
-    // El gasto corriente no tiene día fijo, así que se reparte a medias.
-    const mitadPresupuestos = this.budgets().reduce((sum, b) => sum + b.amount, 0) / 2;
-
-    return [
-      this.buildQuincena('Primera quincena', 'Del 1 al 15', mitadSalario, deudasPrimera, mitadPresupuestos),
-      this.buildQuincena('Segunda quincena', 'Del 16 a fin de mes', mitadSalario, deudasSegunda, mitadPresupuestos)
-    ];
-  });
+  quincenas = computed(() =>
+    buildPaydayPlan(
+      this.salary(),
+      this.debts().map(d => ({
+        nombre: d.nombre,
+        minimumPayment: d.minimumPayment,
+        paymentDay: d.paymentDay
+      })),
+      this.budgets().reduce((sum, b) => sum + b.amount, 0)
+    )
+  );
 
   ngOnInit() {
     forkJoin({
@@ -371,41 +361,6 @@ export class PlannerComponent implements OnInit {
       this.debts.set(debts ?? []);
       this.budgets.set(budgets ?? []);
     });
-  }
-
-  private buildQuincena(
-    titulo: string,
-    rango: string,
-    income: number,
-    debts: Debt[],
-    budgetShare: number
-  ) {
-    const commitments: Commitment[] = debts.map(d => ({
-      nombre: d.nombre,
-      amount: d.minimumPayment,
-      tipo: 'deuda' as const,
-      day: d.paymentDay
-    }));
-
-    if (budgetShare > 0) {
-      commitments.push({
-        nombre: 'Gasto presupuestado',
-        amount: budgetShare,
-        tipo: 'presupuesto' as const
-      });
-    }
-
-    const committed = commitments.reduce((sum, c) => sum + c.amount, 0);
-
-    return {
-      titulo,
-      rango,
-      income,
-      committed,
-      available: income - committed,
-      usedPercentage: income > 0 ? Math.min(100, (committed / income) * 100) : 0,
-      commitments
-    };
   }
 
   saveSalary() {

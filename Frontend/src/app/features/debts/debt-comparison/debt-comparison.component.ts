@@ -9,13 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { DebtService } from '../../../core/services/debt.service';
 import { Debt } from '../../../core/models/domain.models';
-
-interface SimulationResult {
-  months: number;
-  totalInterest: number;
-  order: string[];
-  finished: boolean;
-}
+import { PayoffStrategy, simulateDebtPayoff } from '../../../core/finance/debt-strategy';
 
 @Component({
   selector: 'app-debt-comparison',
@@ -369,66 +363,17 @@ export class DebtComparisonComponent implements OnInit {
     });
   }
 
-  /**
-   * Simula el pago mes a mes: se abonan los mínimos, el extra va íntegro a la
-   * deuda prioritaria y lo que se libera al saldar una pasa a la siguiente.
-   */
-  private simulate(strategy: 'snowball' | 'avalanche'): SimulationResult {
-    const saldos = this.debts().map(d => ({
-      nombre: d.nombre,
-      balance: d.balance,
-      rate: d.annualRate / 100 / 12,
-      minimum: d.minimumPayment
-    }));
-
-    if (saldos.length === 0) {
-      return { months: 0, totalInterest: 0, order: [], finished: true };
-    }
-
-    const prioridad = [...saldos].sort((a, b) =>
-      strategy === 'snowball' ? a.balance - b.balance : b.rate - a.rate
+  private simulate(strategy: PayoffStrategy) {
+    return simulateDebtPayoff(
+      this.debts().map(d => ({
+        nombre: d.nombre,
+        balance: d.balance,
+        annualRate: d.annualRate,
+        minimumPayment: d.minimumPayment
+      })),
+      strategy,
+      this.extra()
     );
-
-    const order = prioridad.map(d => d.nombre);
-    const extra = this.extra();
-    let months = 0;
-    let totalInterest = 0;
-    const MAX_MESES = 600;
-
-    while (saldos.some(d => d.balance > 0.01) && months < MAX_MESES) {
-      months++;
-      let disponibleExtra = extra;
-
-      for (const deuda of saldos) {
-        if (deuda.balance <= 0) continue;
-        const interes = deuda.balance * deuda.rate;
-        deuda.balance += interes;
-        totalInterest += interes;
-      }
-
-      for (const deuda of saldos) {
-        if (deuda.balance <= 0) continue;
-        const abono = Math.min(deuda.minimum, deuda.balance);
-        deuda.balance -= abono;
-      }
-
-      for (const objetivo of prioridad) {
-        if (disponibleExtra <= 0) break;
-        const deuda = saldos.find(d => d.nombre === objetivo.nombre);
-        if (!deuda || deuda.balance <= 0) continue;
-
-        const abono = Math.min(disponibleExtra, deuda.balance);
-        deuda.balance -= abono;
-        disponibleExtra -= abono;
-      }
-    }
-
-    return {
-      months,
-      totalInterest,
-      order,
-      finished: months < MAX_MESES
-    };
   }
 
   formatMonths(months: number): string {
