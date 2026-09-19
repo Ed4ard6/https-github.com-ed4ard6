@@ -78,4 +78,43 @@ describe('buildPaydayPlan', () => {
 
     expect(primera.commitments.every(c => c.tipo === 'deuda')).toBe(true);
   });
+
+  it('coloca cada gasto fijo en la quincena de su día de pago', () => {
+    const alquiler = { nombre: 'Alquiler', amount: 800_000, paymentDay: 5 };
+    const internet = { nombre: 'Internet', amount: 120_000, paymentDay: 22 };
+
+    const [primera, segunda] = buildPaydayPlan(3_000_000, [], 0, [alquiler, internet]);
+
+    expect(primera.commitments.map(c => c.nombre)).toEqual(['Alquiler']);
+    expect(segunda.commitments.map(c => c.nombre)).toEqual(['Internet']);
+    expect(primera.committed).toBe(800_000);
+    expect(segunda.committed).toBe(120_000);
+  });
+
+  it('suma deudas y gastos fijos que caen en la misma quincena', () => {
+    const alquiler = { nombre: 'Alquiler', amount: 800_000, paymentDay: 5 };
+
+    const [primera] = buildPaydayPlan(3_000_000, [visa, prestamo], 0, [alquiler]);
+
+    // 75.000 + 40.000 + 800.000
+    expect(primera.committed).toBe(915_000);
+    expect(primera.available).toBe(585_000);
+  });
+
+  it('distingue el tipo de cada compromiso', () => {
+    const alquiler = { nombre: 'Alquiler', amount: 800_000, paymentDay: 5 };
+
+    const [primera] = buildPaydayPlan(3_000_000, [prestamo], 1_000_000, [alquiler]);
+    const tipos = primera.commitments.map(c => c.tipo);
+
+    expect(tipos).toContain('deuda');
+    expect(tipos).toContain('fijo');
+    expect(tipos).toContain('presupuesto');
+  });
+
+  it('sigue funcionando sin gastos fijos', () => {
+    const [primera] = buildPaydayPlan(3_000_000, [visa], 0);
+
+    expect(primera.committed).toBe(75_000);
+  });
 });

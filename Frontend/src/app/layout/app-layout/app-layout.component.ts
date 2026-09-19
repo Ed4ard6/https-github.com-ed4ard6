@@ -58,6 +58,10 @@ import {
                 <mat-icon>account_balance_wallet</mat-icon>
                 <span>Presupuestos</span>
               </a>
+              <a class="nav-item" [routerLink]="['/fixed-expenses']" routerLinkActive="active">
+                <mat-icon>receipt_long</mat-icon>
+                <span>Gastos fijos</span>
+              </a>
               <a class="nav-item" [routerLink]="['/savings']" routerLinkActive="active">
                 <mat-icon>savings</mat-icon>
                 <span>Ahorros</span>

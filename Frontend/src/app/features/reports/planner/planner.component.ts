@@ -13,6 +13,7 @@ import { catchError } from 'rxjs/operators';
 import { SalaryService } from '../../../core/services/salary.service';
 import { DebtService } from '../../../core/services/debt.service';
 import { BudgetService, Budget } from '../../../core/services/budget.service';
+import { FixedExpenseService, FixedExpense } from '../../../core/services/fixed-expense.service';
 import { Debt } from '../../../core/models/domain.models';
 import { buildPaydayPlan } from '../../../core/finance/payday-plan';
 
@@ -99,7 +100,7 @@ import { buildPaydayPlan } from '../../../core/finance/payday-plan';
 
           <div class="commitments" *ngIf="q.commitments.length > 0">
             <div class="commitment" *ngFor="let c of q.commitments">
-              <mat-icon>{{ c.tipo === 'deuda' ? 'credit_card' : 'account_balance_wallet' }}</mat-icon>
+              <mat-icon>{{ commitmentIcon(c.tipo) }}</mat-icon>
               <span class="commitment-name">
                 {{ c.nombre }}
                 <small *ngIf="c.day">día {{ c.day }}</small>
@@ -117,9 +118,9 @@ import { buildPaydayPlan } from '../../../core/finance/payday-plan';
       <mat-card class="notes" *ngIf="salary() > 0">
         <mat-icon>info</mat-icon>
         <p>
-          Las cuotas de deuda caen en la quincena que corresponde a su día de pago.
-          Los presupuestos del mes se reparten a partes iguales entre las dos, porque
-          el gasto del día a día no tiene fecha fija.
+          Las cuotas de deuda y los gastos fijos caen en la quincena que corresponde
+          a su día de pago. Los presupuestos del mes se reparten a partes iguales
+          entre las dos, porque el gasto del día a día no tiene fecha fija.
         </p>
       </mat-card>
     </div>
@@ -326,11 +327,13 @@ export class PlannerComponent implements OnInit {
   private salaryService = inject(SalaryService);
   private debtService = inject(DebtService);
   private budgetService = inject(BudgetService);
+  private fixedExpenseService = inject(FixedExpenseService);
   private snackBar = inject(MatSnackBar);
 
   salary = signal(0);
   debts = signal<Debt[]>([]);
   budgets = signal<Budget[]>([]);
+  fixedExpenses = signal<FixedExpense[]>([]);
   saving = signal(false);
 
   salaryInput: number | null = null;
@@ -343,7 +346,12 @@ export class PlannerComponent implements OnInit {
         minimumPayment: d.minimumPayment,
         paymentDay: d.paymentDay
       })),
-      this.budgets().reduce((sum, b) => sum + b.amount, 0)
+      this.budgets().reduce((sum, b) => sum + b.amount, 0),
+      this.fixedExpenses().map(f => ({
+        nombre: f.nombre,
+        amount: f.amount,
+        paymentDay: f.paymentDay
+      }))
     )
   );
 
@@ -353,13 +361,15 @@ export class PlannerComponent implements OnInit {
       debts: this.debtService.getDebts().pipe(catchError(() => of([]))),
       budgets: this.budgetService
         .getBudgets(new Date().getMonth() + 1, new Date().getFullYear())
-        .pipe(catchError(() => of([])))
-    }).subscribe(({ salary, debts, budgets }) => {
+        .pipe(catchError(() => of([]))),
+      fixedExpenses: this.fixedExpenseService.getFixedExpenses().pipe(catchError(() => of([])))
+    }).subscribe(({ salary, debts, budgets, fixedExpenses }) => {
       const amount = salary?.amount ?? 0;
       this.salary.set(amount);
-      this.salaryInput = amount;
+      this.salaryInput = amount || null;
       this.debts.set(debts ?? []);
       this.budgets.set(budgets ?? []);
+      this.fixedExpenses.set(fixedExpenses ?? []);
     });
   }
 
@@ -378,6 +388,11 @@ export class PlannerComponent implements OnInit {
         this.saving.set(false);
       }
     });
+  }
+
+  commitmentIcon(tipo: 'deuda' | 'presupuesto' | 'fijo'): string {
+    if (tipo === 'deuda') return 'credit_card';
+    return tipo === 'fijo' ? 'receipt_long' : 'account_balance_wallet';
   }
 
   abs(value: number): number {

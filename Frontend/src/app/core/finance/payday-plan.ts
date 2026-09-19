@@ -5,10 +5,17 @@ export interface PaydayDebt {
   paymentDay: number;
 }
 
+export interface PaydayFixedExpense {
+  nombre: string;
+  amount: number;
+  /** Día del mes en que se paga el recibo */
+  paymentDay: number;
+}
+
 export interface Commitment {
   nombre: string;
   amount: number;
-  tipo: 'deuda' | 'presupuesto';
+  tipo: 'deuda' | 'presupuesto' | 'fijo';
   day?: number;
 }
 
@@ -26,32 +33,36 @@ export interface Payday {
 const FIRST_PAYDAY_LAST_DAY = 15;
 
 /**
- * Reparte el salario entre las dos quincenas del mes. Cada cuota de deuda va a
- * la quincena que le toca por su día de pago; el gasto presupuestado se divide
- * a partes iguales, porque el día a día no tiene fecha fija.
+ * Reparte el salario entre las dos quincenas del mes. Las cuotas de deuda y los
+ * gastos fijos van a la quincena que les toca por su día de pago; el gasto
+ * presupuestado se divide a partes iguales, porque el día a día no tiene fecha.
  */
 export function buildPaydayPlan(
   monthlySalary: number,
   debts: PaydayDebt[],
-  totalBudgeted: number
+  totalBudgeted: number,
+  fixedExpenses: PaydayFixedExpense[] = []
 ): Payday[] {
   const half = monthlySalary / 2;
   const budgetShare = totalBudgeted / 2;
+  const isFirstHalf = (day: number) => day <= FIRST_PAYDAY_LAST_DAY;
 
   return [
     buildPayday(
       'Primera quincena',
       'Del 1 al 15',
       half,
-      debts.filter(d => d.paymentDay <= FIRST_PAYDAY_LAST_DAY),
-      budgetShare
+      debts.filter(d => isFirstHalf(d.paymentDay)),
+      budgetShare,
+      fixedExpenses.filter(f => isFirstHalf(f.paymentDay))
     ),
     buildPayday(
       'Segunda quincena',
       'Del 16 a fin de mes',
       half,
-      debts.filter(d => d.paymentDay > FIRST_PAYDAY_LAST_DAY),
-      budgetShare
+      debts.filter(d => !isFirstHalf(d.paymentDay)),
+      budgetShare,
+      fixedExpenses.filter(f => !isFirstHalf(f.paymentDay))
     )
   ];
 }
@@ -61,14 +72,23 @@ function buildPayday(
   rango: string,
   income: number,
   debts: PaydayDebt[],
-  budgetShare: number
+  budgetShare: number,
+  fixedExpenses: PaydayFixedExpense[]
 ): Payday {
-  const commitments: Commitment[] = debts.map(d => ({
-    nombre: d.nombre,
-    amount: d.minimumPayment,
-    tipo: 'deuda',
-    day: d.paymentDay
-  }));
+  const commitments: Commitment[] = [
+    ...debts.map(d => ({
+      nombre: d.nombre,
+      amount: d.minimumPayment,
+      tipo: 'deuda' as const,
+      day: d.paymentDay
+    })),
+    ...fixedExpenses.map(f => ({
+      nombre: f.nombre,
+      amount: f.amount,
+      tipo: 'fijo' as const,
+      day: f.paymentDay
+    }))
+  ];
 
   if (budgetShare > 0) {
     commitments.push({
