@@ -19,6 +19,8 @@ public class FinanceDbContext : DbContext
     public DbSet<Salary> Salaries { get; set; } = null!;
     public DbSet<Debt> Debts { get; set; } = null!;
     public DbSet<Budget> Budgets { get; set; } = null!;
+    public DbSet<FixedExpense> FixedExpenses { get; set; } = null!;
+    public DbSet<SavingsGoal> SavingsGoals { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -89,5 +91,35 @@ public class FinanceDbContext : DbContext
         modelBuilder.Entity<Budget>()
             .HasIndex(b => new { b.UserId, b.CategoryId, b.Year, b.Month })
             .IsUnique();
+
+        // Configuración de FixedExpense
+        modelBuilder.Entity<FixedExpense>()
+            .HasKey(f => f.Id);
+        modelBuilder.Entity<FixedExpense>()
+            .HasOne(f => f.User)
+            .WithMany(u => u.FixedExpenses)
+            .HasForeignKey(f => f.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<FixedExpense>()
+            .HasOne(f => f.Category)
+            .WithMany()
+            .HasForeignKey(f => f.CategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configuración de SavingsGoal
+        modelBuilder.Entity<SavingsGoal>()
+            .HasKey(g => g.Id);
+        modelBuilder.Entity<SavingsGoal>()
+            .HasOne(g => g.User)
+            .WithMany(u => u.SavingsGoals)
+            .HasForeignKey(g => g.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Al borrar una meta, sus aportes siguen existiendo como ahorro suelto
+        modelBuilder.Entity<Transaction>()
+            .HasOne(t => t.SavingsGoal)
+            .WithMany()
+            .HasForeignKey(t => t.SavingsGoalId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

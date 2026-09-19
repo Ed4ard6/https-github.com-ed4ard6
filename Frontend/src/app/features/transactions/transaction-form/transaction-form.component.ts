@@ -55,7 +55,7 @@ import { Category } from '../../../core/models/domain.models';
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Monto</mat-label>
-              <input matInput type="number" formControlName="amount" step="0.01" />
+              <input matInput type="number" formControlName="amount" step="0.01" placeholder="0" />
               <mat-error *ngIf="form.get('amount')?.hasError('required')">
                 Monto es requerido
               </mat-error>
@@ -146,7 +146,8 @@ export class TransactionFormComponent implements OnInit {
   form = this.fb.group({
     kind: ['expense', [Validators.required]],
     categoryId: ['', [Validators.required]],
-    amount: [0, [Validators.required, Validators.min(0.01)]],
+    // Arranca vacío, no en 0: si no, hay que borrar el cero cada vez.
+    amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
     description: ['', [Validators.maxLength(500)]],
     date: [new Date().toISOString().split('T')[0], [Validators.required]]
   });

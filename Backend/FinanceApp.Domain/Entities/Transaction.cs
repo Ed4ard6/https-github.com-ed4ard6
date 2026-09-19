@@ -20,10 +20,18 @@ public class Transaction
     public string Description { get; set; } = string.Empty;
     public DateTime Date { get; set; } = DateTime.UtcNow;
     public TransactionKind Kind { get; set; }
+
+    /// <summary>
+    /// Meta de ahorro a la que se imputa este aporte. Solo para las de tipo
+    /// Saving; el progreso de cada meta se calcula sumando las suyas.
+    /// </summary>
+    public string? SavingsGoalId { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Relaciones
     public User? User { get; set; }
     public Category? Category { get; set; }
+    public SavingsGoal? SavingsGoal { get; set; }
 }

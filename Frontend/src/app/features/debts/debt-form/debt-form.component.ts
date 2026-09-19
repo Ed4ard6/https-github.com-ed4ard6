@@ -42,7 +42,7 @@ import { DebtService } from '../../../core/services/debt.service';
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Saldo actual</mat-label>
-              <input matInput type="number" formControlName="balance" step="1000" />
+              <input matInput type="number" formControlName="balance" step="1000" placeholder="0" />
               <span matTextPrefix>$&nbsp;</span>
               <mat-hint>Lo que te queda por pagar</mat-hint>
               <mat-error *ngIf="form.get('balance')?.hasError('min')">
@@ -52,14 +52,14 @@ import { DebtService } from '../../../core/services/debt.service';
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Importe original</mat-label>
-              <input matInput type="number" formControlName="originalAmount" step="1000" />
+              <input matInput type="number" formControlName="originalAmount" step="1000" placeholder="0" />
               <span matTextPrefix>$&nbsp;</span>
               <mat-hint>Con cuánto empezó la deuda. Sirve para calcular el progreso</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Tasa de interés anual</mat-label>
-              <input matInput type="number" formControlName="annualRate" step="0.1" />
+              <input matInput type="number" formControlName="annualRate" step="0.1" placeholder="0" />
               <span matTextSuffix>%</span>
               <mat-error *ngIf="form.get('annualRate')?.hasError('max')">
                 Debe estar entre 0 y 200
@@ -68,7 +68,7 @@ import { DebtService } from '../../../core/services/debt.service';
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Cuota mínima mensual</mat-label>
-              <input matInput type="number" formControlName="minimumPayment" step="1000" />
+              <input matInput type="number" formControlName="minimumPayment" step="1000" placeholder="0" />
               <span matTextPrefix>$&nbsp;</span>
             </mat-form-field>
 
@@ -142,12 +142,14 @@ export class DebtFormComponent implements OnInit {
   debtId: string | null = null;
   saving = signal(false);
 
+  // Los importes arrancan vacíos, no en 0: si no, hay que borrar el cero
+  // en cada campo antes de escribir.
   form = this.fb.group({
     nombre: ['', [Validators.required]],
-    balance: [0, [Validators.required, Validators.min(0)]],
-    originalAmount: [0, [Validators.min(0)]],
-    annualRate: [0, [Validators.required, Validators.min(0), Validators.max(200)]],
-    minimumPayment: [0, [Validators.required, Validators.min(0)]],
+    balance: [null as number | null, [Validators.required, Validators.min(0)]],
+    originalAmount: [null as number | null, [Validators.min(0)]],
+    annualRate: [null as number | null, [Validators.required, Validators.min(0), Validators.max(200)]],
+    minimumPayment: [null as number | null, [Validators.required, Validators.min(0)]],
     paymentDay: [1, [Validators.required, Validators.min(1), Validators.max(31)]]
   });
 

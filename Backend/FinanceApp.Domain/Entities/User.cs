@@ -18,4 +18,6 @@ public class User
     public ICollection<Salary> Salaries { get; set; } = new List<Salary>();
     public ICollection<Debt> Debts { get; set; } = new List<Debt>();
     public ICollection<Budget> Budgets { get; set; } = new List<Budget>();
+    public ICollection<FixedExpense> FixedExpenses { get; set; } = new List<FixedExpense>();
+    public ICollection<SavingsGoal> SavingsGoals { get; set; } = new List<SavingsGoal>();
 }

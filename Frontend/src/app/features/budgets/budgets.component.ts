@@ -86,7 +86,7 @@ import {
 
           <mat-form-field appearance="outline">
             <mat-label>Importe del mes</mat-label>
-            <input matInput type="number" [(ngModel)]="newAmount" step="10000" />
+            <input matInput type="number" [(ngModel)]="newAmount" step="10000" placeholder="0" />
             <span matTextPrefix>$&nbsp;</span>
           </mat-form-field>
 
@@ -94,7 +94,7 @@ import {
             mat-raised-button
             color="primary"
             (click)="addBudget()"
-            [disabled]="!newCategoryId || newAmount <= 0 || saving()"
+            [disabled]="!newCategoryId || !newAmount || newAmount <= 0 || saving()"
           >
             <mat-icon>add</mat-icon>
             Añadir
@@ -355,7 +355,9 @@ export class BudgetsComponent implements OnInit {
   private reference = signal(new Date());
 
   newCategoryId = '';
-  newAmount = 0;
+  // null y no 0, para que el campo se vea vacío en lugar de obligar a
+  // borrar el cero antes de escribir.
+  newAmount: number | null = null;
 
   monthName = computed(() =>
     new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric' }).format(this.reference())
@@ -406,7 +408,7 @@ export class BudgetsComponent implements OnInit {
   }
 
   addBudget() {
-    if (!this.newCategoryId || this.newAmount <= 0) return;
+    if (!this.newCategoryId || !this.newAmount || this.newAmount <= 0) return;
 
     const ref = this.reference();
     this.saving.set(true);
@@ -420,7 +422,7 @@ export class BudgetsComponent implements OnInit {
       next: (budget) => {
         this.budgets.update(list => [...list, budget]);
         this.newCategoryId = '';
-        this.newAmount = 0;
+        this.newAmount = null;
         this.saving.set(false);
         this.snackBar.open('Presupuesto añadido', 'Cerrar', { duration: 3000 });
       },

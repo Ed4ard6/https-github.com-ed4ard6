@@ -45,14 +45,14 @@ import { buildPaydayPlan } from '../../../core/finance/payday-plan';
         <div class="salary-form">
           <mat-form-field appearance="outline">
             <mat-label>Salario mensual</mat-label>
-            <input matInput type="number" [(ngModel)]="salaryInput" step="100000" />
+            <input matInput type="number" [(ngModel)]="salaryInput" step="100000" placeholder="0" />
             <span matTextPrefix>$&nbsp;</span>
             <mat-hint *ngIf="salary() > 0">
               Guardado: {{ formatCurrency(salary()) }}
             </mat-hint>
           </mat-form-field>
 
-          <button mat-raised-button color="primary" (click)="saveSalary()" [disabled]="salaryInput <= 0 || saving()">
+          <button mat-raised-button color="primary" (click)="saveSalary()" [disabled]="!salaryInput || salaryInput <= 0 || saving()">
             <mat-icon>save</mat-icon>
             Guardar
           </button>
@@ -333,7 +333,7 @@ export class PlannerComponent implements OnInit {
   budgets = signal<Budget[]>([]);
   saving = signal(false);
 
-  salaryInput = 0;
+  salaryInput: number | null = null;
 
   quincenas = computed(() =>
     buildPaydayPlan(
@@ -364,7 +364,7 @@ export class PlannerComponent implements OnInit {
   }
 
   saveSalary() {
-    if (this.salaryInput <= 0) return;
+    if (!this.salaryInput || this.salaryInput <= 0) return;
 
     this.saving.set(true);
     this.salaryService.saveSalary(Number(this.salaryInput)).subscribe({
