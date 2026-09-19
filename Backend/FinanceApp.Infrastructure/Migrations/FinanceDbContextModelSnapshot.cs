@@ -56,6 +56,50 @@ namespace FinanceApp.Infrastructure.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("FinanceApp.Domain.Entities.Debt", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("AnnualRate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("MinimumPayment")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("OriginalAmount")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PaymentDay")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Debts");
+                });
+
             modelBuilder.Entity("FinanceApp.Domain.Entities.Salary", b =>
                 {
                     b.Property<string>("Id")
@@ -164,6 +208,17 @@ namespace FinanceApp.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("FinanceApp.Domain.Entities.Debt", b =>
+                {
+                    b.HasOne("FinanceApp.Domain.Entities.User", "User")
+                        .WithMany("Debts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("FinanceApp.Domain.Entities.Salary", b =>
                 {
                     b.HasOne("FinanceApp.Domain.Entities.User", "User")
@@ -202,6 +257,8 @@ namespace FinanceApp.Infrastructure.Migrations
             modelBuilder.Entity("FinanceApp.Domain.Entities.User", b =>
                 {
                     b.Navigation("Categories");
+
+                    b.Navigation("Debts");
 
                     b.Navigation("Salaries");
 
