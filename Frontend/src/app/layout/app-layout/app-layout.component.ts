@@ -5,8 +5,13 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatDialog } from '@angular/material/dialog';
 import { HeaderComponent } from '../header/header.component';
 import { AuthService } from '../../core/services/auth.service';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData
+} from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-layout',
@@ -25,12 +30,13 @@ import { AuthService } from '../../core/services/auth.service';
   template: `
     <div class="layout-wrapper">
       <!-- Header -->
-      <app-header (logoutClick)="logout()"></app-header>
+      <app-header (logoutClick)="confirmLogout()"></app-header>
 
       <!-- Contenido con Sidebar -->
       <div class="content-wrapper">
         <mat-sidenav-container autosize>
           <mat-sidenav mode="side" [opened]="true" class="sidebar">
+            <div class="sidebar-content">
             <nav class="nav-menu">
               <a class="nav-item active" [routerLink]="['/dashboard']" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                 <mat-icon>dashboard</mat-icon>
@@ -61,6 +67,14 @@ import { AuthService } from '../../core/services/auth.service';
                 <span>Reportes</span>
               </a>
             </nav>
+
+            <div class="sidebar-footer">
+              <button type="button" class="nav-item logout-item" (click)="confirmLogout()">
+                <mat-icon>logout</mat-icon>
+                <span>Cerrar sesión</span>
+              </button>
+            </div>
+            </div>
           </mat-sidenav>
 
           <mat-sidenav-content>
@@ -147,11 +161,43 @@ import { AuthService } from '../../core/services/auth.service';
       flex-shrink: 0;
     }
 
+    .sidebar-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
     .nav-menu {
       display: flex;
       flex-direction: column;
       gap: var(--spacing-xs);
       padding: 0 var(--spacing-sm);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: var(--spacing-md) var(--spacing-sm) 0;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .logout-item {
+      width: 100%;
+      background: transparent;
+      border: 1px solid transparent;
+      border-left: 3px solid transparent;
+      font-family: inherit;
+      text-align: left;
+      color: var(--color-danger);
+
+      mat-icon {
+        color: var(--color-danger);
+      }
+
+      &:hover {
+        background-color: rgba(239, 68, 68, 0.12);
+        color: var(--color-danger);
+        border-left-color: var(--color-danger);
+      }
     }
 
     .nav-item {
@@ -206,8 +252,25 @@ import { AuthService } from '../../core/services/auth.service';
 export class AppLayoutComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
 
-  logout(): void {
+  confirmLogout(): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: '¿Cerrar sesión?',
+        message: 'Tendrás que volver a iniciar sesión para acceder a tus datos.',
+        confirmText: 'Cerrar sesión',
+        icon: 'logout',
+        danger: true
+      } satisfies ConfirmDialogData
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) this.logout();
+    });
+  }
+
+  private logout(): void {
     this.authService.logout().subscribe(() => {
       this.router.navigate(['/auth/login']);
     });

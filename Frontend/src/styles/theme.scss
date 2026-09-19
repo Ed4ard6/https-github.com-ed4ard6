@@ -188,6 +188,16 @@ table {
 }
 
 // ============================================================================
+// DIÁLOGOS (overlay, fuera del componente)
+// ============================================================================
+
+.mat-mdc-dialog-surface {
+  background-color: var(--color-bg-card) !important;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg) !important;
+}
+
+// ============================================================================
 // MENÚ DE USUARIO (se renderiza en un overlay, fuera del componente)
 // ============================================================================
 
