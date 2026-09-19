@@ -7,7 +7,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { timeout } from 'rxjs/operators';
 import { TransactionService } from '../../../core/services/transaction.service';
 import { CategoryService } from '../../../core/services/category.service';
@@ -30,7 +30,7 @@ import { Category } from '../../../core/models/domain.models';
     <div class="form-container">
       <mat-card>
         <mat-card-header>
-          <mat-card-title>Nueva Transacción</mat-card-title>
+          <mat-card-title>{{ transactionId ? 'Editar Transacción' : 'Nueva Transacción' }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <form [formGroup]="form" (ngSubmit)="onSubmit()">
@@ -138,8 +138,10 @@ export class TransactionFormComponent implements OnInit {
   private categoryService = inject(CategoryService);
   private snackBar = inject(MatSnackBar);
   private cdr = inject(ChangeDetectorRef);
+  private route = inject(ActivatedRoute);
 
   categories: Category[] = [];
+  transactionId: string | null = null;
   isLoading = false;
   form = this.fb.group({
     kind: ['expense', [Validators.required]],
@@ -150,7 +152,31 @@ export class TransactionFormComponent implements OnInit {
   });
 
   ngOnInit() {
+    this.transactionId = this.route.snapshot.paramMap.get('id');
     this.loadCategories();
+
+    if (this.transactionId) {
+      this.loadTransaction(this.transactionId);
+    }
+  }
+
+  private loadTransaction(id: string) {
+    this.transactionService.getTransaction(id).subscribe({
+      next: (transaction) => {
+        this.form.patchValue({
+          kind: transaction.kind,
+          categoryId: transaction.categoryId,
+          amount: transaction.amount,
+          description: transaction.description,
+          date: new Date(transaction.date).toISOString().split('T')[0]
+        });
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.snackBar.open('No se pudo cargar la transacción', 'Cerrar', { duration: 5000 });
+        this.router.navigate(['/transactions']);
+      }
+    });
   }
 
   // Sin fallback a mock: una categoría inventada se rechaza al guardar.
@@ -172,13 +198,8 @@ export class TransactionFormComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log('📝 Form valid:', this.form.valid);
-    console.log('📝 Form errors:', this.form.errors);
-    console.log('📝 Amount control errors:', this.form.get('amount')?.errors);
-    console.log('📝 Form value:', this.form.value);
-
     if (!this.form.valid) {
-      this.snackBar.open('❌ Por favor completa todos los campos requeridos', 'Cerrar', { duration: 4000 });
+      this.snackBar.open('Completa todos los campos requeridos', 'Cerrar', { duration: 4000 });
       return;
     }
 
@@ -193,19 +214,21 @@ export class TransactionFormComponent implements OnInit {
       kind: value.kind as any
     };
 
-    console.log('📤 Sending payload:', payload);
+    const request$ = this.transactionId
+      ? this.transactionService.updateTransaction(this.transactionId, payload)
+      : this.transactionService.createTransaction(payload);
 
-    this.transactionService.createTransaction(payload).subscribe({
-      next: (response) => {
-        console.log('✅ Transacción guardada:', response);
-        this.snackBar.open('✅ Transacción guardada correctamente', 'Cerrar', { duration: 3000 });
+    request$.subscribe({
+      next: () => {
+        const mensaje = this.transactionId ? 'Transacción actualizada' : 'Transacción guardada';
+        this.snackBar.open(mensaje, 'Cerrar', { duration: 3000 });
         this.router.navigate(['/transactions']);
       },
       error: (error) => {
-        console.error('❌ Error al guardar:', error);
         const errorMsg = error?.error?.message || error?.message || 'Error desconocido';
-        this.snackBar.open(`❌ Error: ${errorMsg}`, 'Cerrar', { duration: 5000 });
+        this.snackBar.open(errorMsg, 'Cerrar', { duration: 5000 });
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }

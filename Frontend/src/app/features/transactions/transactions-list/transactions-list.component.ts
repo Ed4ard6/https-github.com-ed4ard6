@@ -6,7 +6,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData
+} from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TransactionService } from '../../../core/services/transaction.service';
 import { MockDataService } from '../../../core/services/mock-data.service';
 import { Transaction } from '../../../core/models/domain.models';
@@ -21,7 +27,8 @@ import { Transaction } from '../../../core/models/domain.models';
     MatIconModule,
     MatCardModule,
     MatFormFieldModule,
-    MatSelectModule
+    MatSelectModule,
+    MatSnackBarModule
   ],
   template: `
     <div class="transactions-container">
@@ -104,6 +111,8 @@ export class TransactionsListComponent implements OnInit {
   private transactionService = inject(TransactionService);
   private mockDataService = inject(MockDataService);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
 
   // signal, no un array plano: la app es zoneless y un subscribe()
   // no dispara el re-render por sí solo.
@@ -137,13 +146,25 @@ export class TransactionsListComponent implements OnInit {
   }
 
   deleteTransaction(id: string) {
-    this.transactionService.deleteTransaction(id).subscribe({
-      next: () => {
-        this.transactions.update(list => list.filter(t => t.id !== id));
-      },
-      error: (error) => {
-        console.error('Error deleting transaction:', error);
-      }
+    const transaction = this.transactions().find(t => t.id === id);
+
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: '¿Eliminar transacción?',
+        message: transaction?.description
+          ? `Se eliminará "${transaction.description}". Esta acción no se puede deshacer.`
+          : 'Esta acción no se puede deshacer.',
+        confirmText: 'Eliminar',
+        icon: 'delete',
+        danger: true
+      } satisfies ConfirmDialogData
+    }).afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+
+      this.transactionService.deleteTransaction(id).subscribe({
+        next: () => this.transactions.update(list => list.filter(t => t.id !== id)),
+        error: () => this.snackBar.open('No se pudo eliminar la transacción', 'Cerrar', { duration: 5000 })
+      });
     });
   }
 

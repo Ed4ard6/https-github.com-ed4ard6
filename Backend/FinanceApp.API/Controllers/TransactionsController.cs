@@ -35,16 +35,7 @@ public class TransactionsController : ControllerBase
             .OrderByDescending(t => t.Date)
             .ToList();
 
-        return Ok(transactions.Select(t => new TransactionDto
-        {
-            Id = t.Id,
-            CategoryId = t.CategoryId,
-            CategoryName = t.Category?.Nombre ?? "",
-            Amount = t.Amount,
-            Description = t.Description,
-            Date = t.Date,
-            Kind = t.Kind.ToString().ToLowerInvariant()
-        }));
+        return Ok(transactions.Select(t => ToDto(t, t.Category?.Nombre ?? string.Empty)));
     }
 
     [HttpPost]
@@ -81,22 +72,56 @@ public class TransactionsController : ControllerBase
             _context.SaveChanges();
 
             // Devolver la entidad serializaría Category -> Transactions -> Category en ciclo.
-            return CreatedAtAction(nameof(GetTransactions), new { id = transaction.Id }, new TransactionDto
-            {
-                Id = transaction.Id,
-                CategoryId = transaction.CategoryId,
-                CategoryName = category.Nombre,
-                Amount = transaction.Amount,
-                Description = transaction.Description,
-                Date = transaction.Date,
-                Kind = transaction.Kind.ToString().ToLowerInvariant()
-            });
+            return CreatedAtAction(nameof(GetTransaction), new { id = transaction.Id }, ToDto(transaction, category.Nombre));
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error creating transaction: {ex.Message}");
             return StatusCode(500, new { message = $"Error interno: {ex.Message}" });
         }
+    }
+
+    [HttpGet("{id}")]
+    public IActionResult GetTransaction(string id)
+    {
+        var transaction = _context.Transactions
+            .Include(t => t.Category)
+            .FirstOrDefault(t => t.Id == id && t.UserId == GetUserId());
+
+        if (transaction == null)
+            return NotFound(new { message = "Transacción no encontrada" });
+
+        return Ok(ToDto(transaction, transaction.Category?.Nombre ?? string.Empty));
+    }
+
+    [HttpPut("{id}")]
+    public IActionResult UpdateTransaction(string id, [FromBody] CreateTransactionRequest request)
+    {
+        var userId = GetUserId();
+
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { message = "Usuario no identificado" });
+
+        var transaction = _context.Transactions.FirstOrDefault(t => t.Id == id && t.UserId == userId);
+        if (transaction == null)
+            return NotFound(new { message = "Transacción no encontrada" });
+
+        if (!Enum.TryParse<TransactionKind>(request.Kind, true, out var kind))
+            return BadRequest(new { message = $"Tipo de transacción inválido: '{request.Kind}'" });
+
+        var category = _context.Categories.FirstOrDefault(c => c.Id == request.CategoryId && c.UserId == userId);
+        if (category == null)
+            return BadRequest(new { message = $"La categoría '{request.CategoryId}' no existe para este usuario" });
+
+        transaction.CategoryId = request.CategoryId;
+        transaction.Amount = request.Amount;
+        transaction.Description = request.Description;
+        transaction.Date = request.Date;
+        transaction.Kind = kind;
+        transaction.UpdatedAt = DateTime.UtcNow;
+        _context.SaveChanges();
+
+        return Ok(ToDto(transaction, category.Nombre));
     }
 
     [HttpDelete("{id}")]
@@ -113,4 +138,15 @@ public class TransactionsController : ControllerBase
 
         return NoContent();
     }
+
+    private static TransactionDto ToDto(Transaction transaction, string categoryName) => new()
+    {
+        Id = transaction.Id,
+        CategoryId = transaction.CategoryId,
+        CategoryName = categoryName,
+        Amount = transaction.Amount,
+        Description = transaction.Description,
+        Date = transaction.Date,
+        Kind = transaction.Kind.ToString().ToLowerInvariant()
+    };
 }

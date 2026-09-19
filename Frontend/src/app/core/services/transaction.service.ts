@@ -22,7 +22,7 @@ export class TransactionService {
     return this.http.post<Transaction>(this.apiUrl, data);
   }
 
-  updateTransaction(id: string, data: Partial<Transaction>): Observable<Transaction> {
+  updateTransaction(id: string, data: TransactionCreateRequest): Observable<Transaction> {
     return this.http.put<Transaction>(`${this.apiUrl}/${id}`, data);
   }
 

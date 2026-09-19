@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,7 +6,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { Router } from '@angular/router';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CategoryService } from '../../../core/services/category.service';
 
 @Component({
   selector: 'app-category-form',
@@ -18,13 +20,14 @@ import { Router } from '@angular/router';
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    MatCardModule
+    MatCardModule,
+    MatSnackBarModule
   ],
   template: `
     <div class="form-container">
       <mat-card>
         <mat-card-header>
-          <mat-card-title>Nueva Categoría</mat-card-title>
+          <mat-card-title>{{ categoryId ? 'Editar Categoría' : 'Nueva Categoría' }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <form [formGroup]="form" (ngSubmit)="onSubmit()">
@@ -105,9 +108,16 @@ import { Router } from '@angular/router';
     }
   `]
 })
-export class CategoryFormComponent {
+export class CategoryFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private categoryService = inject(CategoryService);
+  private snackBar = inject(MatSnackBar);
+  private cdr = inject(ChangeDetectorRef);
+
+  categoryId: string | null = null;
+  isLoading = false;
 
   form = this.fb.group({
     nombre: ['', Validators.required],
@@ -115,10 +125,56 @@ export class CategoryFormComponent {
     color: ['#a78bfa']
   });
 
-  onSubmit() {
-    if (this.form.valid) {
-      this.navigateTo('/categories');
+  ngOnInit() {
+    this.categoryId = this.route.snapshot.paramMap.get('id');
+
+    if (this.categoryId) {
+      this.categoryService.getCategory(this.categoryId).subscribe({
+        next: (category) => {
+          this.form.patchValue({
+            nombre: category.nombre,
+            kind: category.kind,
+            color: category.color
+          });
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.snackBar.open('No se pudo cargar la categoría', 'Cerrar', { duration: 5000 });
+          this.router.navigate(['/categories']);
+        }
+      });
     }
+  }
+
+  onSubmit() {
+    if (!this.form.valid) {
+      this.snackBar.open('Completa todos los campos requeridos', 'Cerrar', { duration: 4000 });
+      return;
+    }
+
+    this.isLoading = true;
+    const payload = {
+      nombre: this.form.value.nombre!,
+      kind: this.form.value.kind as any,
+      color: this.form.value.color ?? '#a78bfa',
+      activo: true
+    };
+
+    const request$ = this.categoryId
+      ? this.categoryService.updateCategory(this.categoryId, payload)
+      : this.categoryService.createCategory(payload);
+
+    request$.subscribe({
+      next: () => {
+        this.snackBar.open(this.categoryId ? 'Categoría actualizada' : 'Categoría creada', 'Cerrar', { duration: 3000 });
+        this.router.navigate(['/categories']);
+      },
+      error: (error) => {
+        this.snackBar.open(error?.error?.message ?? 'No se pudo guardar', 'Cerrar', { duration: 5000 });
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   navigateTo(path: string) {

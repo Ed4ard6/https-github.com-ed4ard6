@@ -33,14 +33,7 @@ public class CategoriesController : ControllerBase
             .Where(c => c.UserId == userId && c.Activo)
             .ToList();
 
-        return Ok(categories.Select(c => new CategoryDto
-        {
-            Id = c.Id,
-            Nombre = c.Nombre,
-            Kind = c.Kind.ToString().ToLowerInvariant(),
-            Color = c.Color,
-            Activo = c.Activo
-        }));
+        return Ok(categories.Select(ToDto));
     }
 
     [HttpPost]
@@ -70,14 +63,46 @@ public class CategoriesController : ControllerBase
         _context.Categories.Add(category);
         _context.SaveChanges();
 
-        return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, new CategoryDto
-        {
-            Id = category.Id,
-            Nombre = category.Nombre,
-            Kind = category.Kind.ToString().ToLowerInvariant(),
-            Color = category.Color,
-            Activo = category.Activo
-        });
+        return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, ToDto(category));
+    }
+
+    [HttpGet("{id}")]
+    public IActionResult GetCategory(string id)
+    {
+        var category = _context.Categories.FirstOrDefault(c => c.Id == id && c.UserId == GetUserId());
+
+        if (category == null)
+            return NotFound(new { message = "Categoría no encontrada" });
+
+        return Ok(ToDto(category));
+    }
+
+    [HttpPut("{id}")]
+    public IActionResult UpdateCategory(string id, [FromBody] CategoryDto request)
+    {
+        var userId = GetUserId();
+
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { message = "Usuario no identificado" });
+
+        var category = _context.Categories.FirstOrDefault(c => c.Id == id && c.UserId == userId);
+        if (category == null)
+            return NotFound(new { message = "Categoría no encontrada" });
+
+        if (!Enum.TryParse<CategoryKind>(request.Kind, true, out var kind))
+            return BadRequest(new { message = $"Tipo de categoría inválido: '{request.Kind}'" });
+
+        if (string.IsNullOrWhiteSpace(request.Nombre))
+            return BadRequest(new { message = "El nombre es obligatorio" });
+
+        category.Nombre = request.Nombre.Trim();
+        category.Kind = kind;
+        category.Color = request.Color;
+        category.Activo = request.Activo;
+        category.UpdatedAt = DateTime.UtcNow;
+        _context.SaveChanges();
+
+        return Ok(ToDto(category));
     }
 
     [HttpDelete("{id}")]
@@ -94,4 +119,13 @@ public class CategoriesController : ControllerBase
 
         return NoContent();
     }
+
+    private static CategoryDto ToDto(Category category) => new()
+    {
+        Id = category.Id,
+        Nombre = category.Nombre,
+        Kind = category.Kind.ToString().ToLowerInvariant(),
+        Color = category.Color,
+        Activo = category.Activo
+    };
 }
