@@ -354,7 +354,8 @@ export class AppLayoutComponent {
     { path: '/reports/monthly', label: 'Mensual', icon: 'bar_chart' },
     { path: '/reports/waterfall', label: 'Flujo de caja', icon: 'waterfall_chart' },
     { path: '/reports/calendar', label: 'Calendario', icon: 'calendar_month' },
-    { path: '/reports/categories', label: 'Por categoría', icon: 'donut_large' }
+    { path: '/reports/categories', label: 'Por categoría', icon: 'donut_large' },
+    { path: '/reports/planner', label: 'Planificador', icon: 'event_repeat' }
   ];
 
   // Abierto de entrada si ya estás dentro de un reporte.

@@ -167,6 +167,11 @@ export const routes: Routes = [
           import('./features/reports/categories-report/categories-report.component').then(
             m => m.CategoriesReportComponent
           )
+      },
+      {
+        path: 'reports/planner',
+        loadComponent: () =>
+          import('./features/reports/planner/planner.component').then(m => m.PlannerComponent)
       }
     ]
   },
