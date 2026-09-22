@@ -266,6 +266,9 @@ namespace FinanceApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("FixedExpenseId")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Kind")
                         .HasColumnType("INTEGER");
 
@@ -282,6 +285,8 @@ namespace FinanceApp.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("FixedExpenseId");
 
                     b.HasIndex("SavingsGoalId");
 
@@ -410,6 +415,11 @@ namespace FinanceApp.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FinanceApp.Domain.Entities.FixedExpense", "FixedExpense")
+                        .WithMany()
+                        .HasForeignKey("FixedExpenseId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("FinanceApp.Domain.Entities.SavingsGoal", "SavingsGoal")
                         .WithMany()
                         .HasForeignKey("SavingsGoalId")
@@ -422,6 +432,8 @@ namespace FinanceApp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+
+                    b.Navigation("FixedExpense");
 
                     b.Navigation("SavingsGoal");
 

@@ -43,7 +43,16 @@ public class FixedExpensesController : ControllerBase
             .ToList()
             .OrderBy(f => f.PaymentDay);
 
-        return Ok(expenses.Select(ToDto));
+        var now = DateTime.UtcNow;
+        var pagadosEsteMes = _context.Transactions
+            .Where(t => t.UserId == userId
+                        && t.FixedExpenseId != null
+                        && t.Date.Year == now.Year
+                        && t.Date.Month == now.Month)
+            .Select(t => t.FixedExpenseId!)
+            .ToHashSet();
+
+        return Ok(expenses.Select(f => ToDto(f, pagadosEsteMes.Contains(f.Id))));
     }
 
     [HttpGet("{id}")]
@@ -117,6 +126,61 @@ public class FixedExpensesController : ControllerBase
         return Ok(ToDto(expense));
     }
 
+    /// <summary>
+    /// Registra el pago del recibo como una transacción de gasto, para que el
+    /// dinero salga también del dashboard y del presupuesto de su categoría.
+    /// </summary>
+    [HttpPost("{id}/payments")]
+    public IActionResult PayFixedExpense(string id, [FromBody] PayFixedExpenseRequest? request)
+    {
+        var userId = GetUserId();
+        var expense = Find(id);
+
+        if (expense == null)
+            return NotFound(new { message = "Gasto fijo no encontrado" });
+
+        var fecha = request?.Date ?? DateTime.UtcNow;
+
+        if (YaPagado(expense.Id, fecha))
+            return BadRequest(new { message = "Este recibo ya está registrado como pagado en ese mes" });
+
+        // Sin categoría no se registra: elegir una al azar metería el recibo
+        // en un presupuesto que no le corresponde.
+        if (string.IsNullOrEmpty(expense.CategoryId))
+            return BadRequest(new
+            {
+                message = $"Asigna una categoría a \"{expense.Nombre}\" antes de registrar su pago"
+            });
+
+        var categoryId = expense.CategoryId;
+        var importe = request?.Amount is > 0 ? request.Amount.Value : expense.Amount;
+        var now = DateTime.UtcNow;
+
+        _context.Transactions.Add(new Transaction
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserId = userId,
+            CategoryId = categoryId,
+            FixedExpenseId = expense.Id,
+            Amount = -Math.Abs(importe),
+            Description = expense.Nombre,
+            Date = fecha,
+            Kind = TransactionKind.Expense,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+
+        _context.SaveChanges();
+
+        return Ok(ToDto(expense, paidThisMonth: true));
+    }
+
+    private bool YaPagado(string fixedExpenseId, DateTime fecha) =>
+        _context.Transactions.Any(t =>
+            t.FixedExpenseId == fixedExpenseId &&
+            t.Date.Year == fecha.Year &&
+            t.Date.Month == fecha.Month);
+
     [HttpDelete("{id}")]
     public IActionResult DeleteFixedExpense(string id)
     {
@@ -153,7 +217,7 @@ public class FixedExpensesController : ControllerBase
         return null;
     }
 
-    private static FixedExpenseDto ToDto(FixedExpense expense) => new()
+    private static FixedExpenseDto ToDto(FixedExpense expense, bool paidThisMonth = false) => new()
     {
         Id = expense.Id,
         Nombre = expense.Nombre,
@@ -162,6 +226,7 @@ public class FixedExpensesController : ControllerBase
         SplitBetweenPaydays = expense.SplitBetweenPaydays,
         CategoryId = expense.CategoryId,
         CategoryName = expense.Category?.Nombre ?? string.Empty,
-        Activo = expense.Activo
+        Activo = expense.Activo,
+        PaidThisMonth = paidThisMonth
     };
 }

@@ -143,6 +143,30 @@ import {
 
           <span class="expense-amount">{{ formatCurrency(expense.amount) }}</span>
 
+          <span class="paid-badge" *ngIf="expense.paidThisMonth">
+            <mat-icon>check_circle</mat-icon>
+            pagado
+          </span>
+
+          <button
+            mat-stroked-button
+            class="pay-button"
+            *ngIf="!expense.paidThisMonth && expense.categoryId"
+            (click)="pay(expense)"
+          >
+            Registrar pago
+          </button>
+
+          <!-- Sin categoría no se sabe a qué presupuesto imputar el pago -->
+          <span
+            class="needs-category"
+            *ngIf="!expense.paidThisMonth && !expense.categoryId"
+            title="Asigna una categoría para poder registrar el pago"
+          >
+            <mat-icon>info</mat-icon>
+            falta categoría
+          </span>
+
           <div class="expense-actions">
             <button mat-icon-button (click)="startEdit(expense)" aria-label="Editar">
               <mat-icon>edit</mat-icon>
@@ -342,6 +366,45 @@ import {
       flex-shrink: 0;
     }
 
+    .paid-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--color-success);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      white-space: nowrap;
+
+      mat-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+      }
+    }
+
+    .pay-button {
+      white-space: nowrap;
+      font-size: var(--font-size-xs);
+    }
+
+    .needs-category {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--color-text-muted);
+      font-size: var(--font-size-xs);
+      white-space: nowrap;
+
+      mat-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+      }
+    }
+
     .empty-state {
       display: flex;
       flex-direction: column;
@@ -477,6 +540,19 @@ export class FixedExpensesComponent implements OnInit {
       error: (error) => {
         this.snackBar.open(error?.error?.message ?? 'No se pudo guardar', 'Cerrar', { duration: 5000 });
         this.saving.set(false);
+      }
+    });
+  }
+
+  /** Deja constancia del pago para que salga en el dashboard y el presupuesto. */
+  pay(expense: FixedExpense) {
+    this.fixedExpenseService.payFixedExpense(expense.id).subscribe({
+      next: (actualizado) => {
+        this.expenses.update(list => list.map(e => (e.id === expense.id ? actualizado : e)));
+        this.snackBar.open(`Pago de ${expense.nombre} registrado`, 'Cerrar', { duration: 3000 });
+      },
+      error: (error) => {
+        this.snackBar.open(error?.error?.message ?? 'No se pudo registrar el pago', 'Cerrar', { duration: 5000 });
       }
     });
   }

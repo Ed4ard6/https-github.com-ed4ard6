@@ -27,6 +27,12 @@ public class Transaction
     /// </summary>
     public string? SavingsGoalId { get; set; }
 
+    /// <summary>
+    /// Recibo fijo que se estaba pagando con esta transacción. Permite saber
+    /// qué gastos fijos del mes ya están pagados sin adivinarlo por el texto.
+    /// </summary>
+    public string? FixedExpenseId { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
@@ -34,4 +40,5 @@ public class Transaction
     public User? User { get; set; }
     public Category? Category { get; set; }
     public SavingsGoal? SavingsGoal { get; set; }
+    public FixedExpense? FixedExpense { get; set; }
 }

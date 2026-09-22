@@ -10,6 +10,16 @@ public class FixedExpenseDto
     public string? CategoryId { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public bool Activo { get; set; }
+
+    /// <summary>Si ya se registró el pago de este recibo en el mes en curso</summary>
+    public bool PaidThisMonth { get; set; }
+}
+
+public class PayFixedExpenseRequest
+{
+    /// <summary>Importe real pagado; si no se indica, se usa el del recibo</summary>
+    public decimal? Amount { get; set; }
+    public DateTime? Date { get; set; }
 }
 
 public class SaveFixedExpenseRequest

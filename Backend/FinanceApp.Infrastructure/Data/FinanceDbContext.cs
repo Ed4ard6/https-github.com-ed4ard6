@@ -121,5 +121,12 @@ public class FinanceDbContext : DbContext
             .WithMany()
             .HasForeignKey(t => t.SavingsGoalId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Igual con los recibos: el pago registrado sobrevive al gasto fijo
+        modelBuilder.Entity<Transaction>()
+            .HasOne(t => t.FixedExpense)
+            .WithMany()
+            .HasForeignKey(t => t.FixedExpenseId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

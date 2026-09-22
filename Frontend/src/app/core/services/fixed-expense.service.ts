@@ -12,6 +12,8 @@ export interface FixedExpense {
   categoryId: string | null;
   categoryName: string;
   activo: boolean;
+  /** Si ya se registró el pago de este recibo en el mes en curso */
+  paidThisMonth: boolean;
 }
 
 export interface SaveFixedExpenseRequest {
@@ -39,6 +41,11 @@ export class FixedExpenseService {
 
   updateFixedExpense(id: string, data: SaveFixedExpenseRequest): Observable<FixedExpense> {
     return this.http.put<FixedExpense>(`${this.apiUrl}/${id}`, data);
+  }
+
+  /** Registra el pago del recibo como transacción de gasto. */
+  payFixedExpense(id: string): Observable<FixedExpense> {
+    return this.http.post<FixedExpense>(`${this.apiUrl}/${id}/payments`, {});
   }
 
   deleteFixedExpense(id: string): Observable<void> {
