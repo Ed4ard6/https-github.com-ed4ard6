@@ -91,6 +91,16 @@ import {
                   </a>
                 </div>
               </div>
+              <!-- Solo se pinta para administradores; el permiso lo impone el backend -->
+              <a
+                class="nav-item admin-item"
+                *ngIf="isAdmin()"
+                [routerLink]="['/admin']"
+                routerLinkActive="active"
+              >
+                <mat-icon>shield</mat-icon>
+                <span>Administración</span>
+              </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -208,6 +218,13 @@ import {
     .nav-group {
       display: flex;
       flex-direction: column;
+    }
+
+    .admin-item {
+      margin-top: var(--spacing-md);
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--color-border);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
     }
 
     .nav-toggle {
@@ -364,6 +381,8 @@ export class AppLayoutComponent {
 
   // Abierto de entrada si ya estás dentro de un reporte.
   reportsOpen = signal(this.router.url.startsWith('/reports'));
+
+  isAdmin = () => this.authService.isAdmin();
 
   isReportsRoute = computed(() => this.reportsOpen() || this.router.url.startsWith('/reports'));
 

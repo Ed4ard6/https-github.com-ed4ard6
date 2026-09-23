@@ -81,6 +81,8 @@ public class UsersController : ControllerBase
             return BadRequest(new { message = "La nueva contraseña debe tener al menos 6 caracteres" });
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        // Ya eligió una propia: deja de arrastrar la provisional del admin
+        user.MustChangePassword = false;
         user.UpdatedAt = DateTime.UtcNow;
         _context.SaveChanges();
 

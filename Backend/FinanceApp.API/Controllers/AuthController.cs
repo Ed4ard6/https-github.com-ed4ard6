@@ -35,17 +35,19 @@ public class AuthController : ControllerBase
         if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
             return Unauthorized(new { message = "Email o contraseña incorrectos" });
 
+        // Una cuenta desactivada por un administrador no entra, aunque la
+        // contraseña sea correcta.
+        if (!user.Activo)
+            return Unauthorized(new { message = "Esta cuenta está desactivada" });
+
+        user.LastLoginAt = DateTime.UtcNow;
+        _context.SaveChanges();
+
         var token = GenerateToken(user);
         return Ok(new AuthResponse
         {
             Token = token,
-            User = new UserDto
-            {
-                Id = user.Id,
-                Nombre = user.Nombre,
-                Email = user.Email,
-                CreatedAt = user.CreatedAt
-            }
+            User = ToDto(user)
         });
     }
 
@@ -85,15 +87,19 @@ public class AuthController : ControllerBase
         return Ok(new AuthResponse
         {
             Token = token,
-            User = new UserDto
-            {
-                Id = user.Id,
-                Nombre = user.Nombre,
-                Email = user.Email,
-                CreatedAt = user.CreatedAt
-            }
+            User = ToDto(user)
         });
     }
+
+    private static UserDto ToDto(User user) => new()
+    {
+        Id = user.Id,
+        Nombre = user.Nombre,
+        Email = user.Email,
+        CreatedAt = user.CreatedAt,
+        Role = user.Role.ToString().ToLowerInvariant(),
+        MustChangePassword = user.MustChangePassword
+    };
 
     private string GenerateToken(User user)
     {
@@ -106,7 +112,9 @@ public class AuthController : ControllerBase
         {
             new Claim("sub", user.Id),
             new Claim("email", user.Email),
-            new Claim("nombre", user.Nombre)
+            new Claim("nombre", user.Nombre),
+            // El rol va firmado en el token: el cliente no puede falsearlo
+            new Claim(ClaimTypes.Role, user.Role.ToString())
         };
 
         var token = new JwtSecurityToken(

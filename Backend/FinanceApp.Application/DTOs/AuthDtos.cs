@@ -25,6 +25,11 @@ public class UserDto
     public string Nombre { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>"user" o "admin"; el permiso real lo da el token, no esto</summary>
+    public string Role { get; set; } = "user";
+
+    public bool MustChangePassword { get; set; }
 }
 
 public class UpdateProfileRequest

@@ -22,12 +22,16 @@ public class DataSeeder
 
         if (isFirstRun)
         {
+            // La cuenta de demostración es un usuario corriente: no debe tener
+            // privilegios de administración.
             var demoUser = new User
             {
                 Id = "demo-user-001",
                 Nombre = "Usuario Demo",
                 Email = "demo@example.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("demo123"),
+                Role = UserRole.User,
+                Activo = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -63,6 +67,82 @@ public class DataSeeder
         }
 
         if (changed) context.SaveChanges();
+    }
+
+    /// <summary>
+    /// Crea la cuenta de administración si no hay ninguna. Es una cuenta
+    /// aparte de la de demostración: un usuario de prueba no debe poder
+    /// gestionar cuentas ajenas.
+    ///
+    /// La contraseña sale de la configuración (Admin:Password, o la variable
+    /// de entorno Admin__Password). Si no se indica, se genera una al azar y
+    /// se escribe en el log de arranque: así no queda ninguna credencial de
+    /// administrador escrita en el repositorio.
+    /// </summary>
+    public static void EnsureAdminExists(
+        FinanceDbContext context,
+        string? configuredEmail = null,
+        string? configuredPassword = null,
+        Action<string>? log = null)
+    {
+        if (context.Users.Any(u => u.Role == UserRole.Admin && u.Activo)) return;
+
+        var email = string.IsNullOrWhiteSpace(configuredEmail)
+            ? "admin@financeapp.local"
+            : configuredEmail.Trim().ToLowerInvariant();
+
+        var existente = context.Users.FirstOrDefault(u => u.Email == email);
+        if (existente != null)
+        {
+            existente.Role = UserRole.Admin;
+            existente.Activo = true;
+            existente.UpdatedAt = DateTime.UtcNow;
+            context.SaveChanges();
+            log?.Invoke($"La cuenta {email} ha sido promovida a administrador.");
+            return;
+        }
+
+        var generada = string.IsNullOrWhiteSpace(configuredPassword);
+        var password = generada ? GenerarPassword() : configuredPassword!;
+
+        var now = DateTime.UtcNow;
+        var admin = new User
+        {
+            Id = Guid.NewGuid().ToString(),
+            Nombre = "Administrador",
+            Email = email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+            Role = UserRole.Admin,
+            Activo = true,
+            // Obliga a cambiarla en cuanto entre por primera vez
+            MustChangePassword = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        context.Users.Add(admin);
+        context.SaveChanges();
+        SeedCategoriesForUser(context, admin.Id);
+
+        if (generada)
+        {
+            log?.Invoke(
+                $"Cuenta de administrador creada: {email} / {password}\n" +
+                "Anótala: no vuelve a mostrarse. Cámbiala al entrar.");
+        }
+        else
+        {
+            log?.Invoke($"Cuenta de administrador creada: {email} (contraseña tomada de la configuración).");
+        }
+    }
+
+    /// <summary>Contraseña aleatoria con generador criptográfico.</summary>
+    private static string GenerarPassword()
+    {
+        const string alfabeto = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        var bytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(14);
+
+        return new string(bytes.Select(b => alfabeto[b % alfabeto.Length]).ToArray());
     }
 
     public static void SeedCategoriesForUser(FinanceDbContext context, string userId)

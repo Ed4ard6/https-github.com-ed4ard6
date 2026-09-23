@@ -77,6 +77,14 @@ export class AuthService {
   }
 
   /**
+   * Si el usuario actual es administrador. Sirve para mostrar u ocultar el
+   * panel; el permiso real lo aplica el backend con el rol del token.
+   */
+  isAdmin(): boolean {
+    return this.getCurrentUser()?.role === 'admin';
+  }
+
+  /**
    * Refresca el usuario en memoria y en localStorage tras editar el perfil
    */
   updateStoredUser(user: User): void {

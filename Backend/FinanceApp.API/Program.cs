@@ -71,9 +71,19 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<FinanceDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Seed");
+
     // Sin esto, una tabla nueva no llega a una base de datos ya creada.
     db.Database.Migrate();
     FinanceApp.API.Data.DataSeeder.SeedData(db);
+
+    // La cuenta de administración se crea aparte de la de demostración, con
+    // la contraseña que diga la configuración o una generada al vuelo.
+    FinanceApp.API.Data.DataSeeder.EnsureAdminExists(
+        db,
+        builder.Configuration["Admin:Email"],
+        builder.Configuration["Admin:Password"],
+        mensaje => logger.LogWarning("{Mensaje}", mensaje));
 }
 
 // Middleware

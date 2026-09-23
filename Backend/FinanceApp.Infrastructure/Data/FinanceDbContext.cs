@@ -21,6 +21,7 @@ public class FinanceDbContext : DbContext
     public DbSet<Budget> Budgets { get; set; } = null!;
     public DbSet<FixedExpense> FixedExpenses { get; set; } = null!;
     public DbSet<SavingsGoal> SavingsGoals { get; set; } = null!;
+    public DbSet<AdminAuditLog> AdminAuditLogs { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -128,5 +129,12 @@ public class FinanceDbContext : DbContext
             .WithMany()
             .HasForeignKey(t => t.FixedExpenseId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // El registro de auditoría guarda emails copiados a propósito: debe
+        // seguir siendo legible aunque la cuenta afectada se elimine.
+        modelBuilder.Entity<AdminAuditLog>()
+            .HasKey(a => a.Id);
+        modelBuilder.Entity<AdminAuditLog>()
+            .HasIndex(a => a.CreatedAt);
     }
 }

@@ -24,6 +24,10 @@ export interface User {
   email: string;
   createdAt: Date;
   updatedAt: Date;
+  /** "user" o "admin". Solo para pintar la interfaz: el permiso real
+   *  lo decide el backend a partir del rol firmado en el token. */
+  role?: string;
+  mustChangePassword?: boolean;
 }
 
 /**
