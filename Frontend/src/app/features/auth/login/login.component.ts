@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -62,8 +62,8 @@ import { AuthService } from '../../../core/services/auth.service';
             </mat-form-field>
 
             <!-- Error Message -->
-            <div *ngIf="errorMessage" class="error-message">
-              {{ errorMessage }}
+            <div *ngIf="errorMessage()" class="error-message">
+              {{ errorMessage() }}
             </div>
 
             <!-- Submit Button -->
@@ -72,12 +72,17 @@ import { AuthService } from '../../../core/services/auth.service';
               color="primary"
               type="submit"
               class="full-width"
-              [disabled]="!loginForm.valid || isLoading"
+              [disabled]="!loginForm.valid || isLoading()"
             >
-              <mat-spinner *ngIf="isLoading" diameter="20" class="spinner"></mat-spinner>
-              <span *ngIf="!isLoading">Iniciar sesión</span>
+              <mat-spinner *ngIf="isLoading()" diameter="20" class="spinner"></mat-spinner>
+              <span *ngIf="!isLoading()">Iniciar sesión</span>
             </button>
           </form>
+
+          <!-- Recuperar acceso -->
+          <div class="forgot-link">
+            <a routerLink="/auth/forgot-password">He olvidado mi contraseña</a>
+          </div>
 
           <!-- Register Link -->
           <div class="register-link">
@@ -156,6 +161,22 @@ import { AuthService } from '../../../core/services/auth.service';
         margin-right: 8px;
       }
 
+      .forgot-link {
+        text-align: center;
+        margin-top: var(--spacing-md);
+        font-size: var(--font-size-sm);
+
+        a {
+          color: var(--color-text-secondary);
+          text-decoration: none;
+
+          &:hover {
+            color: var(--color-primary);
+            text-decoration: underline;
+          }
+        }
+      }
+
       .register-link {
         text-align: center;
         margin-top: var(--spacing-md);
@@ -191,8 +212,8 @@ export class LoginComponent {
   private router = inject(Router);
   private fb = inject(FormBuilder);
 
-  isLoading = false;
-  errorMessage = '';
+  isLoading = signal(false);
+  errorMessage = signal('');
 
   loginForm: FormGroup;
 
@@ -221,8 +242,8 @@ export class LoginComponent {
   onLogin(): void {
     if (!this.loginForm.valid) return;
 
-    this.isLoading = true;
-    this.errorMessage = '';
+    this.isLoading.set(true);
+    this.errorMessage.set('');
 
     const { email, password } = this.loginForm.value;
 
@@ -233,12 +254,15 @@ export class LoginComponent {
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
-        this.isLoading = false;
-        this.errorMessage = 'Error en el inicio de sesión. Intenta de nuevo.';
-        console.error('Login error:', error);
+        this.isLoading.set(false);
+        // El backend distingue "credenciales incorrectas" de "cuenta
+        // desactivada", y saber cuál de las dos es cambia qué hacer después.
+        this.errorMessage.set(
+          error?.error?.message ?? 'No se pudo conectar con el servidor. Inténtalo de nuevo.'
+        );
       },
       complete: () => {
-        this.isLoading = false;
+        this.isLoading.set(false);
       }
     });
   }

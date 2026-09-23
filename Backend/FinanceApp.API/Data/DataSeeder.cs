@@ -136,6 +136,56 @@ public class DataSeeder
         }
     }
 
+    /// <summary>
+    /// Devuelve el acceso a la cuenta de administración desde el propio
+    /// servidor. Es la salida al caso en que nadie puede entrar: el usuario
+    /// depende del administrador, pero el administrador no tiene a nadie por
+    /// encima, así que la autoridad recae en quien puede ejecutar el servidor.
+    ///
+    /// No abre ninguna puerta nueva: quien llega a ejecutar esto ya tiene el
+    /// fichero de la base de datos delante.
+    /// </summary>
+    /// <param name="nuevaPassword">Si viene vacía, se genera una al azar.</param>
+    /// <returns>La contraseña aplicada, o null si no hay ninguna cuenta que tocar.</returns>
+    public static string? RestablecerPasswordDeAdmin(
+        FinanceDbContext context,
+        string? email = null,
+        string? nuevaPassword = null)
+    {
+        var buscado = string.IsNullOrWhiteSpace(email) ? null : email.Trim().ToLowerInvariant();
+
+        // Con email, esa cuenta; sin email, el administrador más antiguo.
+        var admin = buscado != null
+            ? context.Users.FirstOrDefault(u => u.Email == buscado)
+            : context.Users
+                .Where(u => u.Role == UserRole.Admin)
+                .OrderBy(u => u.CreatedAt)
+                .FirstOrDefault();
+
+        if (admin == null) return null;
+
+        var password = string.IsNullOrWhiteSpace(nuevaPassword) ? GenerarPassword() : nuevaPassword!;
+
+        admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+        // Que sea administrador y pueda entrar es parte de la recuperación:
+        // un admin desactivado por error dejaría la aplicación sin gestión.
+        admin.Role = UserRole.Admin;
+        admin.Activo = true;
+        admin.MustChangePassword = true;
+        admin.UpdatedAt = DateTime.UtcNow;
+
+        // Los enlaces de recuperación pendientes de esa cuenta se anulan.
+        foreach (var pendiente in context.PasswordResetTokens
+                     .Where(t => t.UserId == admin.Id && t.UsedAt == null)
+                     .ToList())
+        {
+            pendiente.UsedAt = DateTime.UtcNow;
+        }
+
+        context.SaveChanges();
+        return password;
+    }
+
     /// <summary>Contraseña aleatoria con generador criptográfico.</summary>
     private static string GenerarPassword()
     {

@@ -5,6 +5,13 @@ import { tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { User, AuthResponse, JwtToken } from '../models/domain.models';
 
+export interface ForgotPasswordResponse {
+  message: string;
+  /** Sólo en desarrollo: el enlace que iría por correo */
+  resetUrl?: string | null;
+  token?: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -60,6 +67,28 @@ export class AuthService {
         this.userSubject.next(null);
       })
     );
+  }
+
+  /**
+   * Pide un enlace de recuperación. El backend responde lo mismo exista o no
+   * el correo, así que aquí no hay caso de error que distinguir.
+   *
+   * En desarrollo la respuesta trae `resetUrl`/`token` para poder probar el
+   * flujo sin servidor de correo; en producción vienen vacíos.
+   */
+  forgotPassword(email: string): Observable<ForgotPasswordResponse> {
+    return this.http.post<ForgotPasswordResponse>(`${this.apiUrl}/auth/forgot-password`, { email });
+  }
+
+  /**
+   * Canjea el enlace por una contraseña nueva. No pide la anterior: el token
+   * es la prueba de acceso.
+   */
+  resetPassword(token: string, newPassword: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/reset-password`, {
+      token,
+      newPassword
+    });
   }
 
   /**

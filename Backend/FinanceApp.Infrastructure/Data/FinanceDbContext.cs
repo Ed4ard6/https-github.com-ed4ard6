@@ -22,6 +22,7 @@ public class FinanceDbContext : DbContext
     public DbSet<FixedExpense> FixedExpenses { get; set; } = null!;
     public DbSet<SavingsGoal> SavingsGoals { get; set; } = null!;
     public DbSet<AdminAuditLog> AdminAuditLogs { get; set; } = null!;
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -136,5 +137,18 @@ public class FinanceDbContext : DbContext
             .HasKey(a => a.Id);
         modelBuilder.Entity<AdminAuditLog>()
             .HasIndex(a => a.CreatedAt);
+
+        // Los permisos de recuperación mueren con la cuenta, y se buscan por
+        // hash: ese es el único dato que llega desde fuera.
+        modelBuilder.Entity<PasswordResetToken>()
+            .HasKey(t => t.Id);
+        modelBuilder.Entity<PasswordResetToken>()
+            .HasOne(t => t.User)
+            .WithMany()
+            .HasForeignKey(t => t.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<PasswordResetToken>()
+            .HasIndex(t => t.TokenHash)
+            .IsUnique();
     }
 }

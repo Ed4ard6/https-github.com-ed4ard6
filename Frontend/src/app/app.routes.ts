@@ -29,6 +29,21 @@ export const routes: Routes = [
           import('./features/auth/register/register.component').then(m => m.RegisterComponent)
       },
       {
+        path: 'forgot-password',
+        loadComponent: () =>
+          import('./features/auth/forgot-password/forgot-password.component').then(
+            m => m.ForgotPasswordComponent
+          )
+      },
+      {
+        // El enlace del correo llega aquí con ?token=…
+        path: 'reset-password',
+        loadComponent: () =>
+          import('./features/auth/reset-password/reset-password.component').then(
+            m => m.ResetPasswordComponent
+          )
+      },
+      {
         path: '',
         redirectTo: 'login',
         pathMatch: 'full'

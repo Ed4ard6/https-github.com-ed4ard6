@@ -13,6 +13,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Agregar servicios
 builder.Services.AddControllers();
+
+// Sin servidor de correo, el enlace de recuperación se escribe en el log.
+builder.Services.AddScoped<
+    FinanceApp.API.Services.IPasswordResetDelivery,
+    FinanceApp.API.Services.LogPasswordResetDelivery>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -84,6 +89,36 @@ using (var scope = app.Services.CreateScope())
         builder.Configuration["Admin:Email"],
         builder.Configuration["Admin:Password"],
         mensaje => logger.LogWarning("{Mensaje}", mensaje));
+
+    // Rescate para el caso sin salida: nadie puede entrar como administrador.
+    // Uso:  dotnet run -- --reset-admin-password ["NuevaClave"]
+    // Sin clave, se genera una y se imprime. El servidor no arranca después:
+    // es una operación de mantenimiento, no un modo de ejecución.
+    var indiceRescate = Array.FindIndex(args, a =>
+        a.Equals("--reset-admin-password", StringComparison.OrdinalIgnoreCase));
+
+    if (indiceRescate >= 0)
+    {
+        var claveIndicada = indiceRescate + 1 < args.Length && !args[indiceRescate + 1].StartsWith("--")
+            ? args[indiceRescate + 1]
+            : null;
+
+        var email = builder.Configuration["Admin:Email"];
+        var aplicada = FinanceApp.API.Data.DataSeeder.RestablecerPasswordDeAdmin(db, email, claveIndicada);
+
+        if (aplicada == null)
+        {
+            Console.WriteLine("No hay ninguna cuenta de administración que restablecer.");
+            return;
+        }
+
+        Console.WriteLine(
+            $"Contraseña de administración restablecida.\n" +
+            $"  Cuenta:     {email ?? "admin@financeapp.local"}\n" +
+            $"  Contraseña: {aplicada}\n" +
+            "Cámbiala al entrar. El servidor no se ha arrancado; vuelve a lanzarlo sin argumentos.");
+        return;
+    }
 }
 
 // Middleware
