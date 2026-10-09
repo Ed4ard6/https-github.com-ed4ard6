@@ -44,3 +44,4 @@ postgres_data/
 .DS_Store
 .env.local
 .env.*.local
+Backend/FinanceApp.API/add_user.sql

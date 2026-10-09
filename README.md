@@ -1,161 +1,118 @@
-# Finance App - Control de Deudas y Finanzas 💰
+# Finance App – Finanzas personales y control de deudas
 
-Aplicación profesional de gestión financiera con control de deudas, transacciones, presupuestos y reportes avanzados.
+Aplicación web full stack para gestionar finanzas personales: ingresos y gastos, presupuestos, deudas, metas de ahorro, gastos fijos y reportes. API REST en **C# .NET 8** y frontend en **Angular 22**.
 
-## 🎯 Stack Tecnológico
+## Stack
 
-| Layer | Tecnología |
-|-------|-----------|
-| **Backend API** | C# .NET 8 + Entity Framework Core |
-| **Database** | PostgreSQL 15+ |
-| **Frontend** | Angular 18 + TypeScript 5 |
-| **UI Components** | Angular Material 18 |
-| **State** | RxJS |
-| **Auth** | JWT (JSON Web Tokens) |
+| Capa | Tecnología |
+|---|---|
+| Backend | C# .NET 8, ASP.NET Core Web API, Entity Framework Core 8 |
+| Base de datos | SQLite (migraciones con EF Core) |
+| Frontend | Angular 22, TypeScript, Angular Material, RxJS |
+| Autenticación | JWT + contraseñas cifradas con BCrypt |
+| Pruebas | xUnit (backend), Vitest (frontend) |
+| Otros | Swagger, Serilog, Docker y docker-compose |
 
-## 📁 Estructura del Proyecto
+## Funcionalidades
+
+**Finanzas**
+- Dashboard mensual con balance, ingresos, gastos y ahorro.
+- Transacciones: crear, editar, eliminar y filtrar.
+- Categorías por tipo: ingreso, gasto, deuda y ahorro.
+- Salario y **planificador quincenal**: reparte los gastos fijos entre quincenas y propone una provisión.
+- Gastos fijos, con registro del pago como transacción.
+- Presupuestos mensuales por categoría.
+- Metas de ahorro.
+- Deudas con tasas de interés y **comparador de estrategias de pago** (bola de nieve frente a avalancha).
+
+**Reportes**
+- Reporte mensual, flujo de caja en cascada (*waterfall*), calendario de gastos y reporte por categorías.
+
+**Cuentas y seguridad**
+- Registro, inicio de sesión y recuperación de contraseña con token de un solo uso.
+- Panel de administración de cuentas con registro de auditoría, sin acceso a los datos financieros de los usuarios.
+- Aislamiento por usuario: cada consulta se filtra por el usuario autenticado.
+- En producción la API no arranca sin una clave JWT de al menos 32 caracteres.
+- Los endpoints de depuración solo responden en entorno de desarrollo.
+
+## Arquitectura
 
 ```
-finance-app/
-├── Backend/                    # API REST en C# .NET
-│   ├── FinanceApp.API/        # Controllers y configuración
-│   ├── FinanceApp.Application/ # Servicios y DTOs
-│   ├── FinanceApp.Domain/     # Entidades y lógica de negocio
-│   ├── FinanceApp.Infrastructure/ # Data Access, Repositories
-│   ├── FinanceApp.Tests/      # Pruebas unitarias
-│   └── FinanceApp.sln         # Solución
-│
-├── Frontend/                   # Aplicación Angular
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── core/          # Servicios, guards, interceptores
-│   │   │   ├── shared/        # Componentes reutilizables
-│   │   │   ├── features/      # Módulos por funcionalidad
-│   │   │   └── layout/        # Estructura general
-│   │   └── styles/            # SCSS global
-│   └── angular.json
-│
-├── docs/                       # Documentación del proyecto
-├── .github/                    # GitHub Actions (CI/CD)
-├── .gitignore
-└── README.md
+Backend/
+├── FinanceApp.API/             # Controladores, configuración, seeding y servicios
+├── FinanceApp.Application/     # DTOs
+├── FinanceApp.Domain/          # Entidades: User, Transaction, Category, Salary, Budget,
+│                               #   Debt, SavingsGoal, FixedExpense, PasswordResetToken, AdminAuditLog
+├── FinanceApp.Infrastructure/  # DbContext y migraciones de EF Core
+└── FinanceApp.Tests/           # Pruebas de integración de la API (xUnit)
+
+Frontend/src/app/
+├── core/       # Servicios HTTP, guards, interceptor JWT, modelos y cálculos financieros
+├── features/   # Un módulo por funcionalidad (transactions, debts, budgets, reports…)
+├── layout/     # Encabezado y menú lateral
+└── shared/     # Componentes reutilizables
 ```
 
-## 🚀 Comenzar
+Los cálculos financieros del frontend (estrategia de deudas, plan quincenal) están en funciones puras dentro de `core/finance/`, separadas de los componentes para poder probarlas de forma aislada.
 
-### Backend Setup
-```bash
-cd Backend
-
-# Restaurar dependencias
-dotnet restore
-
-# Aplicar migraciones de base de datos
-dotnet ef database update
-
-# Ejecutar API
-dotnet run --project FinanceApp.API
-# API estará en: https://localhost:5001
-```
-
-### Frontend Setup
-```bash
-cd Frontend
-
-# Instalar dependencias
-npm install
-
-# Iniciar servidor de desarrollo
-ng serve
-# Abierto en: http://localhost:4200
-```
-
-## ✨ Características
-
-### Core
-- ✅ **Autenticación** - Login/Register con JWT
-- ✅ **Dashboard** - Vista general de finanzas (balance, ingresos, gastos)
-- ✅ **Transacciones** - CRUD completo (ingresos, gastos, deudas, ahorros)
-- ✅ **Categorías** - Gestión de categorías con tipos y jerarquía
-- ✅ **Salario** - Configuración y seguimiento de ingresos mensuales
-
-### Funcionalidades Avanzadas
-- ✅ **Gestión de Deudas** - Seguimiento de deudas, tasas de interés, pagos
-- ✅ **Comparador de Deudas** - Estrategias snowball vs avalanche
-- ✅ **Presupuestos** - Límites de gastos mensuales por categoría
-- ✅ **Metas de Ahorro** - Seguimiento de objetivos de ahorro
-- ✅ **Reportes**:
-  - Waterfall (flujo de caja mensual)
-  - Calendario de calor (actividad de gastos)
-  - Reporte mensual (narrativo)
-  - Planificador quincenal
-
-## 📊 Modelo de Datos
-
-### Entidades Principales
-- **User** - Usuarios del sistema
-- **Transaction** - Transacciones (ingresos, gastos, deudas, ahorros)
-- **Category** - Categorías de transacciones (expense, income, debt, saving)
-- **Salary** - Historial de salarios
-- **Debt** - Deudas individuales con tasas
-- **Budget** - Presupuestos mensuales
-- **SavingsGoal** - Metas de ahorro
-
-## 🔐 Seguridad
-
-- JWT tokens con expiración configurable
-- Contraseñas hasheadas con bcrypt
-- CORS configurado para frontend
-- Validación de entrada con FluentValidation
-- User isolation (cada usuario solo ve sus datos)
-
-## 🧪 Testing
+## Pruebas
 
 ```bash
-# Backend - Tests unitarios
+# Backend: 89 pruebas sobre deudas, presupuestos, gastos fijos, metas de ahorro,
+# autenticación, recuperación de contraseña y panel de administración
 cd Backend
 dotnet test
 
-# Frontend - Tests
+# Frontend: 34 pruebas de los cálculos financieros
 cd Frontend
-ng test
+npx ng test --watch=false
 ```
 
-## 📚 Documentación
+Las pruebas se ejecutan automáticamente en cada *push* mediante GitHub Actions (`.github/workflows/ci.yml`).
 
-Ver `/docs` para:
-- Arquitectura detallada
-- Especificación de API (Swagger)
-- Guía de desarrollo
-- Configuración de base de datos
+## Ejecución local
 
-## 🛠️ Desarrollo
+**Requisitos:** .NET 8 SDK y Node.js 20 o superior.
 
-### Requisitos Previos
-- .NET 8 SDK
-- Node.js 18+
-- PostgreSQL 15+
-- Visual Studio Code o Visual Studio 2022
+```bash
+# API: aplica las migraciones al arrancar y crea datos de demostración
+cd Backend
+dotnet run --project FinanceApp.API
 
-### Variables de Entorno
-Crear archivos:
-- `Backend/FinanceApp.API/appsettings.Development.json`
-- `Frontend/.env`
+# Frontend (en otra terminal)
+cd Frontend
+npm install
+npm start
+# http://localhost:4200
+```
 
-Ejemplos en la documentación.
+La documentación de la API queda disponible en Swagger en entorno de desarrollo.
 
-## 📈 Roadmap
+**Cuenta de administrador:** se toma de la configuración `Admin:Email` y `Admin:Password`. Si no hay contraseña configurada, se genera una y se muestra en el log al arrancar. Para restablecerla:
 
-- [ ] Fase 1: Frontend con datos mock (2-3 días)
-- [ ] Fase 2: Backend API (2-3 días)
-- [ ] Fase 3: Integración Frontend-Backend (1-2 días)
-- [ ] Fase 4: Testing y optimización (1-2 días)
-- [ ] Fase 5: Despliegue en producción
+```bash
+dotnet run --project FinanceApp.API -- --reset-admin-password
+```
 
-## 👨‍💻 Autor
+### Con Docker
 
-Desarrollado como proyecto de aprendizaje en desarrollo profesional.
+```bash
+docker-compose up --build
+```
 
----
+### Variables de entorno en producción
 
-**Última actualización**: 2026-09-17
+| Variable | Descripción |
+|---|---|
+| `Jwt__Key` | Clave de firma JWT (mínimo 32 caracteres, obligatoria) |
+| `ConnectionStrings__DefaultConnection` | Cadena de conexión SQLite |
+| `Admin__Email`, `Admin__Password` | Cuenta de administrador inicial |
+
+## Documentación adicional
+
+- [SECURITY.md](SECURITY.md): decisiones de seguridad.
+- [DEPLOY.md](DEPLOY.md): opciones de despliegue.
+
+## Autor
+
+**Eduardo Machacón** · [GitHub](https://github.com/Ed4ard6)
